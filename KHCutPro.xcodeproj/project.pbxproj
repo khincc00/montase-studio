@@ -1,0 +1,549 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		68564AC33072D27900DDC54F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 68564AAB3072D27500DDC54F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 68564AB23072D27500DDC54F;
+			remoteInfo = KHCutPro;
+		};
+		68564ACD3072D27900DDC54F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 68564AAB3072D27500DDC54F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 68564AB23072D27500DDC54F;
+			remoteInfo = KHCutPro;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		68564AB33072D27500DDC54F /* KHCutPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KHCutPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		68564AC23072D27900DDC54F /* KHCutProTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KHCutProTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		68564ACC3072D27900DDC54F /* KHCutProUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KHCutProUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		68564AB53072D27500DDC54F /* KHCutPro */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KHCutPro;
+			sourceTree = "<group>";
+		};
+		68564AC53072D27900DDC54F /* KHCutProTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KHCutProTests;
+			sourceTree = "<group>";
+		};
+		68564ACF3072D27900DDC54F /* KHCutProUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KHCutProUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		68564AB03072D27500DDC54F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		68564ABF3072D27900DDC54F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		68564AC93072D27900DDC54F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		68564AAA3072D27500DDC54F = {
+			isa = PBXGroup;
+			children = (
+				68564AB53072D27500DDC54F /* KHCutPro */,
+				68564AC53072D27900DDC54F /* KHCutProTests */,
+				68564ACF3072D27900DDC54F /* KHCutProUITests */,
+				68564AB43072D27500DDC54F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		68564AB43072D27500DDC54F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				68564AB33072D27500DDC54F /* KHCutPro.app */,
+				68564AC23072D27900DDC54F /* KHCutProTests.xctest */,
+				68564ACC3072D27900DDC54F /* KHCutProUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		68564AB23072D27500DDC54F /* KHCutPro */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 68564AD43072D27900DDC54F /* Build configuration list for PBXNativeTarget "KHCutPro" */;
+			buildPhases = (
+				68564AAF3072D27500DDC54F /* Sources */,
+				68564AB03072D27500DDC54F /* Frameworks */,
+				68564AB13072D27500DDC54F /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				68564AB53072D27500DDC54F /* KHCutPro */,
+			);
+			name = KHCutPro;
+			productName = KHCutPro;
+			productReference = 68564AB33072D27500DDC54F /* KHCutPro.app */;
+			productType = "com.apple.product-type.application";
+		};
+		68564AC13072D27900DDC54F /* KHCutProTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 68564AD73072D27900DDC54F /* Build configuration list for PBXNativeTarget "KHCutProTests" */;
+			buildPhases = (
+				68564ABE3072D27900DDC54F /* Sources */,
+				68564ABF3072D27900DDC54F /* Frameworks */,
+				68564AC03072D27900DDC54F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				68564AC43072D27900DDC54F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				68564AC53072D27900DDC54F /* KHCutProTests */,
+			);
+			name = KHCutProTests;
+			productName = KHCutProTests;
+			productReference = 68564AC23072D27900DDC54F /* KHCutProTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		68564ACB3072D27900DDC54F /* KHCutProUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 68564ADA3072D27900DDC54F /* Build configuration list for PBXNativeTarget "KHCutProUITests" */;
+			buildPhases = (
+				68564AC83072D27900DDC54F /* Sources */,
+				68564AC93072D27900DDC54F /* Frameworks */,
+				68564ACA3072D27900DDC54F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				68564ACE3072D27900DDC54F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				68564ACF3072D27900DDC54F /* KHCutProUITests */,
+			);
+			name = KHCutProUITests;
+			productName = KHCutProUITests;
+			productReference = 68564ACC3072D27900DDC54F /* KHCutProUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		68564AAB3072D27500DDC54F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					68564AB23072D27500DDC54F = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					68564AC13072D27900DDC54F = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 68564AB23072D27500DDC54F;
+					};
+					68564ACB3072D27900DDC54F = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 68564AB23072D27500DDC54F;
+					};
+				};
+			};
+			buildConfigurationList = 68564AAE3072D27500DDC54F /* Build configuration list for PBXProject "KHCutPro" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 68564AAA3072D27500DDC54F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 68564AB43072D27500DDC54F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				68564AB23072D27500DDC54F /* KHCutPro */,
+				68564AC13072D27900DDC54F /* KHCutProTests */,
+				68564ACB3072D27900DDC54F /* KHCutProUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		68564AB13072D27500DDC54F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		68564AC03072D27900DDC54F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		68564ACA3072D27900DDC54F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		68564AAF3072D27500DDC54F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		68564ABE3072D27900DDC54F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		68564AC83072D27900DDC54F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		68564AC43072D27900DDC54F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 68564AB23072D27500DDC54F /* KHCutPro */;
+			targetProxy = 68564AC33072D27900DDC54F /* PBXContainerItemProxy */;
+		};
+		68564ACE3072D27900DDC54F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 68564AB23072D27500DDC54F /* KHCutPro */;
+			targetProxy = 68564ACD3072D27900DDC54F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		68564AD23072D27900DDC54F /* Debug configuration for PBXProject "KHCutPro" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		68564AD33072D27900DDC54F /* Release configuration for PBXProject "KHCutPro" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		68564AD53072D27900DDC54F /* Debug configuration for PBXNativeTarget "KHCutPro" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khincc.KHCutPro;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		68564AD63072D27900DDC54F /* Release configuration for PBXNativeTarget "KHCutPro" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khincc.KHCutPro;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		68564AD83072D27900DDC54F /* Debug configuration for PBXNativeTarget "KHCutProTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khincc.KHCutProTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KHCutPro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/KHCutPro";
+			};
+			name = Debug;
+		};
+		68564AD93072D27900DDC54F /* Release configuration for PBXNativeTarget "KHCutProTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khincc.KHCutProTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KHCutPro.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/KHCutPro";
+			};
+			name = Release;
+		};
+		68564ADB3072D27900DDC54F /* Debug configuration for PBXNativeTarget "KHCutProUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khincc.KHCutProUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = KHCutPro;
+			};
+			name = Debug;
+		};
+		68564ADC3072D27900DDC54F /* Release configuration for PBXNativeTarget "KHCutProUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MYQ2H766UX;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.khincc.KHCutProUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = KHCutPro;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		68564AAE3072D27500DDC54F /* Build configuration list for PBXProject "KHCutPro" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68564AD23072D27900DDC54F /* Debug configuration for PBXProject "KHCutPro" */,
+				68564AD33072D27900DDC54F /* Release configuration for PBXProject "KHCutPro" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		68564AD43072D27900DDC54F /* Build configuration list for PBXNativeTarget "KHCutPro" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68564AD53072D27900DDC54F /* Debug configuration for PBXNativeTarget "KHCutPro" */,
+				68564AD63072D27900DDC54F /* Release configuration for PBXNativeTarget "KHCutPro" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		68564AD73072D27900DDC54F /* Build configuration list for PBXNativeTarget "KHCutProTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68564AD83072D27900DDC54F /* Debug configuration for PBXNativeTarget "KHCutProTests" */,
+				68564AD93072D27900DDC54F /* Release configuration for PBXNativeTarget "KHCutProTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		68564ADA3072D27900DDC54F /* Build configuration list for PBXNativeTarget "KHCutProUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68564ADB3072D27900DDC54F /* Debug configuration for PBXNativeTarget "KHCutProUITests" */,
+				68564ADC3072D27900DDC54F /* Release configuration for PBXNativeTarget "KHCutProUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 68564AAB3072D27500DDC54F /* Project object */;
+	validationLevel = 1;
+}
