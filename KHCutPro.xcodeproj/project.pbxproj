@@ -6,6 +6,24 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		686F52763072D39300D8C8E7 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52733072D39300D8C8E7 /* Components.swift */; };
+		686F52773072D39300D8C8E7 /* TimelineModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F526D3072D39300D8C8E7 /* TimelineModel.swift */; };
+		686F52783072D39300D8C8E7 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52713072D39300D8C8E7 /* App.swift */; };
+		686F52793072D39300D8C8E7 /* AssetCompatibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F526F3072D39300D8C8E7 /* AssetCompatibilityService.swift */; };
+		686F527A3072D39300D8C8E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52743072D39300D8C8E7 /* ContentView.swift */; };
+		686F527B3072D39300D8C8E7 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52733072D39300D8C8E7 /* Components.swift */; };
+		686F527C3072D39300D8C8E7 /* TimelineModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F526D3072D39300D8C8E7 /* TimelineModel.swift */; };
+		686F527D3072D39300D8C8E7 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52713072D39300D8C8E7 /* App.swift */; };
+		686F527E3072D39300D8C8E7 /* AssetCompatibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F526F3072D39300D8C8E7 /* AssetCompatibilityService.swift */; };
+		686F527F3072D39300D8C8E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52743072D39300D8C8E7 /* ContentView.swift */; };
+		686F52803072D39300D8C8E7 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52733072D39300D8C8E7 /* Components.swift */; };
+		686F52813072D39300D8C8E7 /* TimelineModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F526D3072D39300D8C8E7 /* TimelineModel.swift */; };
+		686F52823072D39300D8C8E7 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52713072D39300D8C8E7 /* App.swift */; };
+		686F52833072D39300D8C8E7 /* AssetCompatibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F526F3072D39300D8C8E7 /* AssetCompatibilityService.swift */; };
+		686F52843072D39300D8C8E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686F52743072D39300D8C8E7 /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		68564AC33072D27900DDC54F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +45,11 @@
 		68564AB33072D27500DDC54F /* KHCutPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KHCutPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		68564AC23072D27900DDC54F /* KHCutProTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KHCutProTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		68564ACC3072D27900DDC54F /* KHCutProUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KHCutProUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		686F526D3072D39300D8C8E7 /* TimelineModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineModel.swift; sourceTree = "<group>"; };
+		686F526F3072D39300D8C8E7 /* AssetCompatibilityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetCompatibilityService.swift; sourceTree = "<group>"; };
+		686F52713072D39300D8C8E7 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		686F52733072D39300D8C8E7 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		686F52743072D39300D8C8E7 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +92,10 @@
 		68564AAA3072D27500DDC54F = {
 			isa = PBXGroup;
 			children = (
+				686F526E3072D39300D8C8E7 /* Models */,
+				686F52703072D39300D8C8E7 /* Services */,
+				686F52723072D39300D8C8E7 /* Sources */,
+				686F52753072D39300D8C8E7 /* Views */,
 				68564AB53072D27500DDC54F /* KHCutPro */,
 				68564AC53072D27900DDC54F /* KHCutProTests */,
 				68564ACF3072D27900DDC54F /* KHCutProUITests */,
@@ -84,6 +111,39 @@
 				68564ACC3072D27900DDC54F /* KHCutProUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		686F526E3072D39300D8C8E7 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				686F526D3072D39300D8C8E7 /* TimelineModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		686F52703072D39300D8C8E7 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				686F526F3072D39300D8C8E7 /* AssetCompatibilityService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		686F52723072D39300D8C8E7 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				686F52713072D39300D8C8E7 /* App.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		686F52753072D39300D8C8E7 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				686F52733072D39300D8C8E7 /* Components.swift */,
+				686F52743072D39300D8C8E7 /* ContentView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -215,6 +275,11 @@
 		68564AAF3072D27500DDC54F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
+				686F52803072D39300D8C8E7 /* Components.swift in Sources */,
+				686F52813072D39300D8C8E7 /* TimelineModel.swift in Sources */,
+				686F52823072D39300D8C8E7 /* App.swift in Sources */,
+				686F52833072D39300D8C8E7 /* AssetCompatibilityService.swift in Sources */,
+				686F52843072D39300D8C8E7 /* ContentView.swift in Sources */,
 			);
 		};
 		68564ABE3072D27900DDC54F /* Sources */ = {
@@ -374,10 +439,13 @@
 				DEVELOPMENT_TEAM = MYQ2H766UX;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "MONTASE STUDIO";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "MONTASE STUDIO memakai pengenalan suara untuk membuat caption otomatis dari audio klip.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -406,10 +474,13 @@
 				DEVELOPMENT_TEAM = MYQ2H766UX;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "MONTASE STUDIO";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "MONTASE STUDIO memakai pengenalan suara untuk membuat caption otomatis dari audio klip.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
