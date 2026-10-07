@@ -228,6 +228,10 @@ extension TimelineModel {
         isAnalyzing = true
         analysisStatus = "Menyinkronkan audio…"
         defer { isAnalyzing = false; analysisStatus = "" }
+        guard !video.isRetimed, !audio.isRetimed else {
+            statusMessage = "Auto-Sync tidak bisa dipakai pada klip yang kecepatannya diubah. Kembalikan ke 1× dulu."
+            return
+        }
         async let a = AudioSync.envelope(url: video.asset.url, maxSeconds: 180)
         async let b = AudioSync.envelope(url: audio.asset.url, maxSeconds: 180)
         guard let ref = await a, let other = await b, let shift = await AudioSync.offset(reference: ref, other: other) else {

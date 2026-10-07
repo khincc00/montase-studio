@@ -12,9 +12,7 @@ struct ContentView: View {
     @AppStorage("khcutpro.showTimeline") private var showTimeline = true
     @AppStorage("khcutpro.inspectorTab") private var inspectorTab = InspectorView.Tab.video.rawValue
     @AppStorage("khcutpro.accent") private var accent = EditorAccent.amber.rawValue
-    @AppStorage("khcutpro.shortcut.select") private var selectShortcut = "a"
-    @AppStorage("khcutpro.shortcut.trim") private var trimShortcut = "t"
-    @AppStorage("khcutpro.shortcut.blade") private var bladeShortcut = "b"
+    private let shortcuts = ShortcutStore.shared
     @State private var isCustomizationPresented = false
     @State private var isEffectsPresented = false
 
@@ -105,171 +103,486 @@ struct ContentView: View {
     }
 
     private var workspaceBar: some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                sectionLabel("PROJECT")
-                HStack(spacing: 7) {
-                    Menu {
-                        Button("Open Project…", systemImage: "folder") { library.openProject(timeline: timeline) }
-                        Button("Save Project", systemImage: "square.and.arrow.down") { library.saveProject(timeline: timeline) }
-                        Button("Save Project As…", systemImage: "doc.badge.plus") { library.saveProject(timeline: timeline, saveAs: true) }
-                        Divider()
-                        Button("Versions…", systemImage: "clock.arrow.circlepath") { timeline.isSnapshotsPresented = true }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "film.stack").foregroundStyle(FCP.selection)
-                            Text(library.projectName)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .frame(maxWidth: 115, alignment: .leading)
-                            Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
-                        }
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
-                    }
-                    .menuStyle(.borderlessButton)
-                    Button { library.isImporterPresented = true } label: {
-                        Image(systemName: "square.and.arrow.down")
-                    }
-                    .help("Import Media (⌘I)")
-                }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // KLASIFIKASI 1: MEDIA & PROYEK
+                projectSection
+
+                toolbarDivider
+
+                // KLASIFIKASI 2: RUANG KERJA & PANEL
+                workspaceSection
+
+                toolbarDivider
+
+                // KLASIFIKASI 3: ALAT EDIT
+                editSection
+
+                toolbarDivider
+
+                // KLASIFIKASI 4: EFEK & KREATIF
+                effectsSection
+
+                toolbarDivider
+
+                // KLASIFIKASI 5: NAVIGASI & MONITOR
+                transportSection
+
+                toolbarDivider
+
+                // KLASIFIKASI 6: EKSPOR & HASIL
+                deliverySection
             }
-            .frame(width: 180, alignment: .leading)
-
-            toolbarDivider
-
-            VStack(alignment: .leading, spacing: 4) {
-                sectionLabel("WORKSPACE")
-                HStack(spacing: 3) {
-                    ForEach(EditorWorkspace.presets) { preset in
-                        Button { applyWorkspace(preset) } label: {
-                            Label(preset.title, systemImage: preset.icon)
-                                .font(.system(size: 10, weight: .semibold))
-                                .labelStyle(.titleAndIcon)
-                                .padding(.horizontal, 8)
-                                .frame(height: 25)
-                                .background(currentWorkspace == preset ? Color.white.opacity(0.12) : .clear,
-                                            in: RoundedRectangle(cornerRadius: 6))
-                                .foregroundStyle(currentWorkspace == preset ? .white : FCP.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Button { isCustomizationPresented = true } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .frame(width: 26, height: 25)
-                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .help("Customize panels and appearance")
-                }
-            }
-            .frame(width: 315, alignment: .leading)
-
-            toolbarDivider
-
-            VStack(alignment: .leading, spacing: 4) {
-                sectionLabel("EDIT")
-                HStack(spacing: 5) {
-                    ForEach(EditTool.allCases, id: \.self) { tool in
-                        Button { timeline.tool = tool } label: {
-                            Image(systemName: tool.icon)
-                                .frame(width: 25, height: 25)
-                                .background(timeline.tool == tool ? FCP.selection.opacity(0.22) : Color.white.opacity(0.06),
-                                            in: RoundedRectangle(cornerRadius: 6))
-                                .foregroundStyle(timeline.tool == tool ? FCP.selection : .white.opacity(0.85))
-                        }
-                        .buttonStyle(.plain)
-                        .help("\(tool.title) (\(shortcut(for: tool)))")
-                    }
-                    Button { isEffectsPresented = true } label: {
-                        Label("Titles & FX", systemImage: "sparkles")
-                            .font(.system(size: 10, weight: .medium))
-                            .padding(.horizontal, 8)
-                            .frame(height: 25)
-                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $isEffectsPresented) { EffectsGallery() }
-                    Button { timeline.addAdjustmentLayer() } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .frame(width: 25, height: 25)
-                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                    .help("Add Adjustment Layer above selected clips or at the playhead")
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            toolbarDivider
-
-            VStack(alignment: .trailing, spacing: 4) {
-                sectionLabel("PLAYBACK")
-                HStack(spacing: 8) {
-                    Button { transport.step(frames: -1) } label: {
-                        Image(systemName: "backward.frame.fill")
-                    }
-                    .help("Previous Frame")
-                    Button { transport.togglePlay() } label: {
-                        Image(systemName: transport.isPlaying ? "pause.fill" : "play.fill")
-                            .foregroundStyle(FCP.selection)
-                    }
-                    .help("Play / Pause (Space)")
-                    Button { transport.step(frames: 1) } label: {
-                        Image(systemName: "forward.frame.fill")
-                    }
-                    .help("Next Frame")
-                    TimecodeText(size: 12, timelineOnly: true)
-                        .foregroundStyle(.white.opacity(0.9))
-                        .padding(.leading, 5)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.white.opacity(0.85))
-            }
-            .frame(width: 185, alignment: .trailing)
-
-            toolbarDivider
-
-            VStack(alignment: .trailing, spacing: 4) {
-                sectionLabel("DELIVERY")
-                HStack(spacing: 8) {
-                    Button { timeline.presentExport() } label: {
-                        Label("Export", systemImage: "square.and.arrow.up")
-                            .font(.system(size: 10, weight: .bold))
-                            .padding(.horizontal, 10)
-                            .frame(height: 27)
-                            .background(FCP.selection, in: RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.black.opacity(0.9))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(timeline.isExporting)
-                    .help("Export Movie (⌘E)")
-                }
-            }
-            .frame(width: 95, alignment: .trailing)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
         }
-        .padding(.horizontal, 14)
-        .frame(height: 58)
+        .frame(height: 64)
         .background(FCP.panel)
         .sheet(isPresented: $isCustomizationPresented) { WorkspaceCustomizationView() }
     }
 
-    private var toolbarDivider: some View {
-        Rectangle().fill(FCP.border).frame(width: 1, height: 32).padding(.horizontal, 12)
+    // MARK: - Klasifikasi 1: Media & Proyek
+    private var projectSection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            sectionHeader("PROYEK & MEDIA", icon: "folder.fill")
+            HStack(spacing: 5) {
+                Menu {
+                    Button("Buka Proyek…", systemImage: "folder") { library.openProject(timeline: timeline) }
+                    Button("Simpan Proyek", systemImage: "square.and.arrow.down") { library.saveProject(timeline: timeline) }
+                    Button("Simpan Proyek Sebagai…", systemImage: "doc.badge.plus") { library.saveProject(timeline: timeline, saveAs: true) }
+                    Divider()
+                    Button("Riwayat Versi…", systemImage: "clock.arrow.circlepath") { timeline.isSnapshotsPresented = true }
+                    Button("Ambil Snapshot Saat Ini", systemImage: "camera") { timeline.takeSnapshot(named: "") }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "film.stack")
+                            .foregroundStyle(FCP.selection)
+                            .font(.system(size: 11))
+                        Text(library.projectName.isEmpty ? "Proyek Baru" : library.projectName)
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .frame(maxWidth: 110, alignment: .leading)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(FCP.secondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(height: 28)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                }
+                .menuStyle(.borderlessButton)
+                .help("Menu Proyek & Snapshot (⌘O, ⌘S)")
+
+                Button {
+                    library.isImporterPresented = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.system(size: 10.5))
+                        Text("Impor")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(height: 28)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    .foregroundStyle(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .help("Impor Media ke Library (⌘I)")
+
+                Menu {
+                    Button(timeline.useProxies ? "Gunakan Media Asli (Full Res)" : "Aktifkan Proxy Ringan") {
+                        timeline.setUseProxies(!timeline.useProxies)
+                    }
+                    Divider()
+                    Button("Buat Proxy untuk Semua Video") {
+                        Task { await library.generateAllProxies(timeline: timeline) }
+                    }
+                    Toggle("Proxy Otomatis (Media 4K+)", isOn: Binding(get: { library.autoProxy }, set: { library.autoProxy = $0 }))
+                    Divider()
+                    if let folder = library.watchedFolder {
+                        Button("Berhenti Memantau “\(folder.lastPathComponent)”") { library.stopWatching() }
+                    } else {
+                        Button("Pantau Folder (Watch Folder)…") { library.chooseWatchFolder(timeline: timeline) }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(timeline.useProxies ? Color.cyan : Color.white.opacity(0.3))
+                            .frame(width: 6, height: 6)
+                        Text(timeline.useProxies ? "Proxy" : "Orig")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(timeline.useProxies ? Color.cyan : FCP.secondary)
+                    }
+                    .padding(.horizontal, 7)
+                    .frame(height: 28)
+                    .background(timeline.useProxies ? Color.cyan.opacity(0.12) : Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(timeline.useProxies ? Color.cyan.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 1))
+                }
+                .menuStyle(.borderlessButton)
+                .help(timeline.useProxies ? "Playback memakai Proxy (Cepat & Hemat Daya)" : "Playback memakai Media Asli (Resolusi Penuh)")
+            }
+        }
     }
 
-    private func sectionLabel(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 8, weight: .bold))
-            .tracking(1)
-            .foregroundStyle(FCP.secondary.opacity(0.85))
+    // MARK: - Klasifikasi 2: Ruang Kerja & Panel
+    private var workspaceSection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            sectionHeader("RUANG KERJA & PANEL", icon: "macwindow")
+            HStack(spacing: 5) {
+                // Presets
+                HStack(spacing: 2) {
+                    ForEach(EditorWorkspace.presets) { preset in
+                        Button {
+                            applyWorkspace(preset)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: preset.icon)
+                                    .font(.system(size: 9.5))
+                                Text(preset.title)
+                                    .font(.system(size: 10.5, weight: currentWorkspace == preset ? .semibold : .regular))
+                            }
+                            .padding(.horizontal, 7)
+                            .frame(height: 28)
+                            .background(currentWorkspace == preset ? FCP.selection.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 5))
+                            .overlay(RoundedRectangle(cornerRadius: 5).stroke(currentWorkspace == preset ? FCP.selection.opacity(0.5) : Color.clear, lineWidth: 1))
+                            .foregroundStyle(currentWorkspace == preset ? FCP.selection : .white.opacity(0.8))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Tata Letak: \(preset.title)")
+                    }
+                }
+                .padding(2)
+                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.white.opacity(0.06), lineWidth: 1))
+
+                // Panel Toggles
+                HStack(spacing: 2) {
+                    panelToggleButton(icon: "sidebar.left", isOn: $showBrowser, title: "Browser")
+                    panelToggleButton(icon: "play.rectangle", isOn: $showViewer, title: "Viewer")
+                    panelToggleButton(icon: "sidebar.right", isOn: $showInspector, title: "Inspector")
+                    panelToggleButton(icon: "rectangle.bottomthird.inset.filled", isOn: $showTimeline, title: "Timeline")
+                }
+                .padding(2)
+                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.white.opacity(0.06), lineWidth: 1))
+
+                // Settings
+                Button {
+                    isCustomizationPresented = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 11))
+                        .frame(width: 26, height: 28)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .foregroundStyle(FCP.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Kustomisasi Panel & Warna Aksen")
+            }
+        }
+    }
+
+    private func panelToggleButton(icon: String, isOn: Binding<Bool>, title: String) -> some View {
+        Button {
+            isOn.wrappedValue.toggle()
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 10.5))
+                .frame(width: 24, height: 24)
+                .background(isOn.wrappedValue ? Color.white.opacity(0.16) : Color.clear, in: RoundedRectangle(cornerRadius: 4))
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(isOn.wrappedValue ? FCP.selection.opacity(0.5) : Color.clear, lineWidth: 1))
+                .foregroundStyle(isOn.wrappedValue ? FCP.selection : FCP.secondary.opacity(0.5))
+        }
+        .buttonStyle(.plain)
+        .help("Tampilkan / Sembunyikan Panel \(title)")
+    }
+
+    // MARK: - Klasifikasi 3: Alat Edit
+    private var editSection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            sectionHeader("ALAT EDIT", icon: "wrench.and.screwdriver.fill")
+            HStack(spacing: 5) {
+                // Edit Tools
+                HStack(spacing: 2) {
+                    ForEach(EditTool.allCases, id: \.self) { tool in
+                        Button {
+                            timeline.tool = tool
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: tool.icon)
+                                    .font(.system(size: 10.5))
+                                Text(shortcut(for: tool))
+                                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(timeline.tool == tool ? FCP.selection : FCP.secondary.opacity(0.7))
+                            }
+                            .padding(.horizontal, 6)
+                            .frame(height: 28)
+                            .background(timeline.tool == tool ? FCP.selection.opacity(0.2) : Color.clear, in: RoundedRectangle(cornerRadius: 5))
+                            .overlay(RoundedRectangle(cornerRadius: 5).stroke(timeline.tool == tool ? FCP.selection.opacity(0.6) : Color.clear, lineWidth: 1))
+                            .foregroundStyle(timeline.tool == tool ? FCP.selection : .white.opacity(0.85))
+                        }
+                        .buttonStyle(.plain)
+                        .help("\(tool.title) Tool (\(shortcut(for: tool)))")
+                    }
+                }
+                .padding(2)
+                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.white.opacity(0.06), lineWidth: 1))
+
+                // Actions: Blade di Playhead & Marker
+                HStack(spacing: 3) {
+                    Button {
+                        timeline.splitAtPlayhead()
+                    } label: {
+                        Image(systemName: "scissors")
+                            .font(.system(size: 11))
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                            .foregroundStyle(.white.opacity(0.9))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Potong / Blade di Playhead (⌘B)")
+
+                    Button {
+                        timeline.addMarker()
+                    } label: {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 10))
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                            .foregroundStyle(.white.opacity(0.9))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Tambah Marker di Playhead (\(shortcuts.label(for: .addMarker)))")
+                }
+
+                // Three-Point Insertions
+                HStack(spacing: 2) {
+                    insertionButton(title: "Connect", icon: "arrow.down.to.line.compact", shortcut: shortcuts.label(for: .connect)) {
+                        transport.perform(.connect)
+                    }
+                    insertionButton(title: "Insert", icon: "arrow.down.right.and.arrow.up.left", shortcut: shortcuts.label(for: .insert)) {
+                        transport.perform(.insert)
+                    }
+                    insertionButton(title: "Append", icon: "arrow.right.to.line", shortcut: shortcuts.label(for: .append)) {
+                        transport.perform(.append)
+                    }
+                }
+                .padding(2)
+                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.white.opacity(0.06), lineWidth: 1))
+            }
+        }
+    }
+
+    private func insertionButton(title: String, icon: String, shortcut: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 10.5))
+                .frame(width: 25, height: 24)
+                .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 4))
+                .foregroundStyle(library.selectedAsset != nil ? .white.opacity(0.9) : FCP.secondary.opacity(0.35))
+        }
+        .buttonStyle(.plain)
+        .disabled(library.selectedAsset == nil)
+        .help("\(title) media dari Browser ke Timeline (\(shortcut))")
+    }
+
+    // MARK: - Klasifikasi 4: Efek & Komposisi
+    private var effectsSection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            sectionHeader("EFEK & KREATIF", icon: "sparkles")
+            HStack(spacing: 4) {
+                Button {
+                    isEffectsPresented = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 10.5))
+                            .foregroundStyle(FCP.selection)
+                        Text("Judul & FX")
+                            .font(.system(size: 10.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 7)
+                    .frame(height: 28)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    .foregroundStyle(.white.opacity(0.9))
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $isEffectsPresented) { EffectsGallery() }
+                .help("Buka Galeri Judul, Efek, Transisi, dan Filter Look")
+
+                Button {
+                    timeline.addAdjustmentLayer()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "square.2.layers.3d")
+                            .font(.system(size: 10))
+                        Text("+ Adj")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .padding(.horizontal, 6)
+                    .frame(height: 28)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    .foregroundStyle(.white.opacity(0.85))
+                }
+                .buttonStyle(.plain)
+                .help("Tambah Adjustment Layer di atas klip timeline")
+
+                Button {
+                    showInspector = true
+                    inspectorTab = InspectorView.Tab.color.rawValue
+                } label: {
+                    Image(systemName: "waveform.path.ecg")
+                        .font(.system(size: 11))
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                .buttonStyle(.plain)
+                .help("Buka Scopes & Color Grading Inspector")
+            }
+        }
+    }
+
+    // MARK: - Klasifikasi 5: Navigasi & Monitor
+    private var transportSection: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            sectionHeader("NAVIGASI", icon: "play.circle.fill")
+            HStack(spacing: 5) {
+                HStack(spacing: 1) {
+                    transportButton("backward.end.fill", help: "Lompat ke Awal") { transport.goToStart() }
+                    transportButton("backward.frame.fill", help: "Mundur 1 Frame (←)") { transport.step(frames: -1) }
+
+                    Button {
+                        transport.togglePlay()
+                    } label: {
+                        Image(systemName: transport.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .frame(width: 28, height: 24)
+                            .background(transport.isPlaying ? FCP.selection : Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundStyle(transport.isPlaying ? .black : .white)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Play / Pause (Space) • J K L untuk shuttle")
+
+                    transportButton("forward.frame.fill", help: "Maju 1 Frame (→)") { transport.step(frames: 1) }
+                    transportButton("forward.end.fill", help: "Lompat ke Akhir") { transport.goToEnd() }
+                }
+                .padding(2)
+                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 7))
+                .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.white.opacity(0.06), lineWidth: 1))
+
+                // LCD Broadcast Timecode Display
+                HStack(spacing: 6) {
+                    TimecodeText(size: 12, timelineOnly: true)
+                        .foregroundStyle(Color.green.opacity(0.95))
+
+                    FrameRateMenu()
+                }
+                .padding(.horizontal, 7)
+                .frame(height: 28)
+                .background(Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.green.opacity(0.25), lineWidth: 1))
+                .help("Posisi Playhead Timeline Saat Ini")
+            }
+        }
+    }
+
+    private func transportButton(_ icon: String, help: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 9.5))
+                .frame(width: 20, height: 24)
+                .background(Color.clear)
+                .foregroundStyle(.white.opacity(0.85))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    // MARK: - Klasifikasi 6: Ekspor & Hasil
+    private var deliverySection: some View {
+        VStack(alignment: .trailing, spacing: 3) {
+            sectionHeader("EKSPOR", icon: "arrow.up.circle.fill")
+            HStack(spacing: 4) {
+                Button {
+                    timeline.presentExport()
+                } label: {
+                    HStack(spacing: 5) {
+                        if timeline.isExporting {
+                            ProgressView()
+                                .controlSize(.mini)
+                        } else {
+                            Image(systemName: "square.and.arrow.up.fill")
+                                .font(.system(size: 10.5))
+                        }
+                        Text(timeline.isExporting ? "Mengekspor…" : "Ekspor")
+                            .font(.system(size: 10.5, weight: .bold))
+                    }
+                    .padding(.horizontal, 9)
+                    .frame(height: 28)
+                    .background(FCP.selection, in: RoundedRectangle(cornerRadius: 6))
+                    .foregroundStyle(.black)
+                }
+                .buttonStyle(.plain)
+                .disabled(timeline.isExporting)
+                .help("Ekspor Film Master (⌘E)")
+
+                Menu {
+                    Button("Ekspor Film Master…", systemImage: "film") { timeline.presentExport() }
+                    Button("Ekspor FCPXML…", systemImage: "doc.text") { timeline.presentExportFCPXML() }
+                    Divider()
+                    Button("Simpan Frame Saat Ini (PNG)…", systemImage: "photo") { timeline.exportCurrentFramePNG() }
+                } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 8, weight: .bold))
+                        .frame(width: 18, height: 28)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .foregroundStyle(FCP.secondary)
+                }
+                .menuStyle(.borderlessButton)
+                .help("Pilihan Format Ekspor & Simpan Frame")
+            }
+        }
+    }
+
+    private var toolbarDivider: some View {
+        Rectangle()
+            .fill(FCP.border)
+            .frame(width: 1, height: 32)
+            .padding(.horizontal, 3)
+    }
+
+    private func sectionHeader(_ title: String, icon: String? = nil) -> some View {
+        HStack(spacing: 3) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 7.5, weight: .bold))
+            }
+            Text(title)
+                .font(.system(size: 8, weight: .bold))
+                .tracking(0.8)
+        }
+        .foregroundStyle(FCP.secondary.opacity(0.75))
     }
 
     private func shortcut(for tool: EditTool) -> String {
         switch tool {
-        case .select: selectShortcut.uppercased()
-        case .trim: trimShortcut.uppercased()
-        case .blade: bladeShortcut.uppercased()
+        case .select: shortcuts.label(for: .toolSelect)
+        case .trim: shortcuts.label(for: .toolTrim)
+        case .blade: shortcuts.label(for: .toolBlade)
         }
     }
 

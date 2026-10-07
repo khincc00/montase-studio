@@ -255,7 +255,7 @@ nonisolated final class GradeCompositor: NSObject, AVVideoCompositing {
 // MARK: - FCPXML export
 
 enum FCPXMLExporter {
-    private static let fps = Int(projectFrameRate)
+    private static var fps: Int { Int(projectFrameRate) }
 
     private static func time(_ seconds: Double) -> String {
         let frames = Int((seconds * projectFrameRate).rounded())

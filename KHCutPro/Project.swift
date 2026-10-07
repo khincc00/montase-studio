@@ -14,6 +14,7 @@ struct ProjectFile: Codable {
     var smartCollections: [SmartCollection]?
     var markers: [TimelineMarker]?
     var colorManagement: ColorManagementMode?
+    var frameRate: Double?
 }
 
 enum ProjectError: LocalizedError {
@@ -35,7 +36,7 @@ enum ProjectIO {
         let file = ProjectFile(name: library.projectName, assets: library.assets, clips: timeline.rootClips,
                                snapshots: timeline.snapshots, markIn: timeline.markIn, markOut: timeline.markOut,
                                roleMix: timeline.roleMix, smartCollections: library.smartCollections, markers: timeline.markers,
-                               colorManagement: timeline.colorManagement)
+                               colorManagement: timeline.colorManagement, frameRate: timeline.frameRate)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         return try encoder.encode(file)
@@ -51,6 +52,7 @@ enum ProjectIO {
         library.smartCollections = file.smartCollections ?? []
         timeline.markers = file.markers ?? []
         timeline.colorManagement = file.colorManagement ?? .off
+        timeline.setFrameRate(file.frameRate ?? 30)
     }
 }
 

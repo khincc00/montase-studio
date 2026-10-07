@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="canopy" x2="0" y2="1"><stop stop-color="#102d34"/><stop offset=".55" stop-color="#276155"/><stop offset="1" stop-color="#8ea176"/></linearGradient>
+    <linearGradient id="fall" x2="1"><stop stop-color="#c3ded0"/><stop offset=".48" stop-color="#e6eee0"/><stop offset="1" stop-color="#79b2ae"/></linearGradient>
+    <radialGradient id="mist"><stop stop-color="#e9e8c7" stop-opacity=".65"/><stop offset="1" stop-color="#dce8cb" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#canopy)"/>
+  <circle cx="641" cy="378" r="310" fill="url(#mist)"/>
+  <path d="M0 0h268l118 159-44 172 68 151-94 238H0Z" fill="#102d2b"/>
+  <path d="M1280 0h-242l-86 160 43 144-74 179 111 237h328Z" fill="#132e2c"/>
+  <path d="M446 75 530 111 510 276 556 369 526 566 468 627 411 539 441 395 401 269Z" fill="url(#fall)"/>
+  <path d="M579 103 647 67 704 108 680 249 726 364 683 532 619 606 577 517 611 380 564 271Z" fill="#d5e8da"/>
+  <path d="M750 101 818 128 788 282 829 388 790 558 734 620 684 533 722 388 694 264Z" fill="#a8d1ca"/>
+  <path d="M0 562Q199 513 393 584T798 574T1280 550V720H0Z" fill="#173e3b"/>
+  <path d="M410 582Q617 533 842 589T1280 577" fill="none" stroke="#c5d8bd" stroke-opacity=".6" stroke-width="7"/>
+  <g fill="#416c4d" opacity=".9">
+    <circle cx="104" cy="143" r="114"/><circle cx="205" cy="228" r="81"/><circle cx="1172" cy="165" r="131"/>
+    <circle cx="1120" cy="287" r="89"/><circle cx="330" cy="65" r="94"/><circle cx="930" cy="53" r="92"/>
+  </g>
+  <g fill="none" stroke="#bed4a0" stroke-opacity=".25" stroke-width="3">
+    <path d="M68 94q82 38 129 132M1074 89q-4 97-73 172M1092 314q58-75 139-74M274 60q-15 78-89 139"/>
+  </g>
+</svg>

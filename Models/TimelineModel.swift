@@ -5,7 +5,11 @@ import ImageIO
 import Observation
 import UniformTypeIdentifiers
 
-let projectFrameRate = 30.0
+/// Frame rate project yang bisa dipilih pengguna.
+let supportedFrameRates: [Double] = [24, 30, 60]
+
+/// Frame rate project aktif. Hanya diubah lewat `TimelineModel.setFrameRate` di main actor.
+nonisolated(unsafe) var projectFrameRate = 30.0
 
 func timecodeString(_ seconds: Double) -> String {
     let fps = Int(projectFrameRate)
@@ -92,6 +96,8 @@ struct TimelineClip: Identifiable, Codable {
     var fadeOut = 0.0
     /// Keyframe per properti (waktu dalam waktu media).
     var tracks: [AnimProperty: KeyframeTrack] = [:]
+    /// Kecepatan klip (konstan atau speed ramp). nil = 1×.
+    var retime: Retime?
 
     /// Klip connected menempel pada klip primary ini dan ikut bergeser bersamanya.
     var anchorID: UUID?
@@ -141,7 +147,7 @@ struct TimelineClip: Identifiable, Codable {
             guard b - a > 0.001 else { return nil }
             var c = child
             c.startTime = startTime + (a - offsetInAsset)
-            c.offsetInAsset = child.offsetInAsset + (a - child.startTime)
+            c.trimHead(by: a - child.startTime)
             c.duration = b - a
             c.opacity *= opacity
             c.volumeDB += volumeDB
@@ -377,9 +383,81 @@ final class TimelineModel {
 
     init() {
         player.actionAtItemEnd = .pause
-        timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 30), queue: .main) { [weak self] time in
+        installTimeObserver()
+    }
+
+    private func installTimeObserver() {
+        if let timeObserver { player.removeTimeObserver(timeObserver) }
+        timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: CMTimeScale(projectFrameRate)), queue: .main) { [weak self] time in
             MainActor.assumeIsolated { self?.tick(time) }
         }
+    }
+
+    /// Frame rate project (24, 30, atau 60). Mengubah timecode, langkah frame, dan frame duration render/ekspor.
+    private(set) var frameRate = projectFrameRate
+
+    func setFrameRate(_ fps: Double) {
+        guard supportedFrameRates.contains(fps), fps != projectFrameRate else { return }
+        projectFrameRate = fps
+        frameRate = fps
+        installTimeObserver()
+        playhead = (playhead * fps).rounded() / fps // tetap tepat di batas frame
+        scheduleRebuild()
+        statusMessage = "Frame rate project: \(Int(fps)) fps."
+    }
+
+    // MARK: Speed
+
+    /// Kecepatan konstan (1 = normal). Durasi klip menyesuaikan sehingga potongan media yang dipakai tetap sama.
+    func setSpeed(_ id: UUID, _ speed: Double) {
+        setRetime(id, Retime(speed: Retime.clamp(speed)))
+    }
+
+    func setRetime(_ id: UUID, _ retime: Retime?) {
+        guard let i = clips.firstIndex(where: { $0.id == id }), clips[i].canRetime else {
+            statusMessage = "Kecepatan hanya bisa diubah pada klip video atau audio biasa."
+            return
+        }
+        checkpoint()
+        clips[i].applyRetime(retime)
+        avoidCollision(id)
+        commit()
+    }
+
+    func applyRetimePreset(_ id: UUID, _ preset: Retime.Preset) {
+        guard let i = clips.firstIndex(where: { $0.id == id }), clips[i].canRetime else {
+            statusMessage = "Kecepatan hanya bisa diubah pada klip video atau audio biasa."
+            return
+        }
+        checkpoint()
+        clips[i].applyPreset(preset)
+        avoidCollision(id)
+        commit()
+    }
+
+    /// Menambah titik kecepatan di playhead (atau di tengah klip bila playhead di luar klip).
+    func addSpeedKey(_ id: UUID) {
+        guard let c = clip(id), c.canRetime else { return }
+        var r = c.retime ?? Retime()
+        let local = (playhead > c.startTime + 0.05 && playhead < c.endTime - 0.05) ? playhead - c.startTime : c.duration / 2
+        if r.keys.isEmpty { r.keys = [SpeedKey(time: 0, speed: r.speed), SpeedKey(time: c.duration, speed: r.speed)] }
+        r.keys.append(SpeedKey(time: local, speed: r.speed(at: local)))
+        r.keys.sort { $0.time < $1.time }
+        setRetime(id, r)
+    }
+
+    func setSpeedKey(_ id: UUID, index: Int, speed: Double? = nil, time: Double? = nil) {
+        guard var r = clip(id)?.retime, r.keys.indices.contains(index) else { return }
+        if let speed { r.keys[index].speed = Retime.clamp(speed) }
+        if let time { r.keys[index].time = max(0, time) }
+        setRetime(id, r)
+    }
+
+    func removeSpeedKey(_ id: UUID, index: Int) {
+        guard var r = clip(id)?.retime, r.keys.indices.contains(index) else { return }
+        r.keys.remove(at: index)
+        if r.keys.count == 1 { r = Retime(speed: r.keys[0].speed) }
+        setRetime(id, r)
     }
 
     // MARK: Queries
@@ -587,14 +665,11 @@ final class TimelineModel {
     }
 
     private func split(index i: Int, at t: Double) {
-        var right = clips[i]
-        right.id = UUID()
         let d = t - clips[i].startTime
         let leftID = clips[i].id
-        clips[i].duration = d
+        var right = clips[i].splitOff(at: d)
+        right.id = UUID()
         right.startTime = t
-        right.offsetInAsset += d
-        right.duration -= d
         clips.append(right)
         if clips[i].lane == 0 {
             // Klip connected yang berada di sisi kanan potongan pindah menempel ke potongan kanan.
@@ -681,14 +756,15 @@ final class TimelineModel {
     func clampedTrim(_ clip: TimelineClip, edge: ClipEdge, delta: Double) -> Double {
         switch edge {
         case .head:
-            return min(max(delta, -clip.offsetInAsset), clip.duration - 0.1)
+            return min(max(delta, clip.headRoom), clip.duration - 0.1)
         case .tail:
-            return min(max(delta, -(clip.duration - 0.1)), max(0, tailRoom(clip)))
+            return min(max(delta, -(clip.duration - 0.1)), max(0, clip.tailRoom))
         }
     }
 
-    private func tailRoom(_ clip: TimelineClip) -> Double {
-        clip.asset.duration > 0 ? clip.asset.duration - clip.offsetInAsset - clip.duration : .infinity
+    /// Sisa media sumber (detik media) setelah ujung klip.
+    private func sourceTailRoom(_ clip: TimelineClip) -> Double {
+        clip.asset.duration > 0 ? clip.asset.duration - clip.offsetInAsset - clip.sourceSpan : .infinity
     }
 
     /// Ripple.
@@ -699,7 +775,7 @@ final class TimelineModel {
         checkpoint()
         switch edge {
         case .head:
-            clips[i].offsetInAsset += delta
+            clips[i].trimHead(by: delta)
             if clips[i].lane != 0 { clips[i].startTime += delta } // primary mengikuti reflow
             clips[i].duration -= delta
         case .tail:
@@ -718,8 +794,8 @@ final class TimelineModel {
     }
 
     func rollRange(left: TimelineClip, right: TimelineClip) -> ClosedRange<Double> {
-        let lo = max(-(left.duration - 0.1), -right.offsetInAsset)
-        let hi = min(right.duration - 0.1, max(0, tailRoom(left)))
+        let lo = max(-(left.duration - 0.1), right.headRoom)
+        let hi = min(right.duration - 0.1, max(0, left.tailRoom))
         return min(lo, 0)...max(hi, 0)
     }
 
@@ -731,14 +807,14 @@ final class TimelineModel {
         guard abs(delta) > 0.001 else { return }
         checkpoint()
         clips[l].duration += delta
-        clips[r].offsetInAsset += delta
+        clips[r].trimHead(by: delta)
         clips[r].startTime += delta
         clips[r].duration -= delta
         commit()
     }
 
     func slipRange(_ clip: TimelineClip) -> ClosedRange<Double> {
-        -clip.offsetInAsset...max(0, min(tailRoom(clip), 100_000))
+        -clip.offsetInAsset...max(0, min(sourceTailRoom(clip), 100_000))
     }
 
     /// Slip: isi klip bergeser, posisi dan durasi tetap.
@@ -754,8 +830,8 @@ final class TimelineModel {
 
     func slideRange(_ clip: TimelineClip) -> ClosedRange<Double>? {
         guard let l = neighbor(of: clip, after: false), let r = neighbor(of: clip, after: true) else { return nil }
-        let lo = max(-(l.duration - 0.1), -r.offsetInAsset)
-        let hi = min(r.duration - 0.1, max(0, tailRoom(l)))
+        let lo = max(-(l.duration - 0.1), r.headRoom)
+        let hi = min(r.duration - 0.1, max(0, l.tailRoom))
         return min(lo, 0)...max(hi, 0)
     }
 
@@ -773,7 +849,7 @@ final class TimelineModel {
         checkpoint()
         clips[l].duration += delta
         clips[i].startTime += delta
-        clips[r].offsetInAsset += delta
+        clips[r].trimHead(by: delta)
         clips[r].startTime += delta
         clips[r].duration -= delta
         commit()
@@ -1131,6 +1207,10 @@ final class TimelineModel {
             statusMessage = "Pilih klip video biasa untuk distabilkan."
             return
         }
+        guard !clip.isRetimed else {
+            statusMessage = "Kembalikan kecepatan klip ke 1× dulu, baru stabilkan."
+            return
+        }
         isAnalyzing = true
         analysisStatus = "Menganalisis gerak kamera…"
         defer { isAnalyzing = false; analysisStatus = "" }
@@ -1173,6 +1253,10 @@ final class TimelineModel {
                 && $0.startTime <= playhead + 0.001 && playhead < $0.endTime
         }) else {
             statusMessage = "Tidak ada klip video di primary storyline pada posisi playhead."
+            return
+        }
+        guard !source.isRetimed else {
+            statusMessage = "Klip sumber memakai speed ramp; kembalikan ke 1× dulu agar pelacakan akurat."
             return
         }
         let start = source.mediaTime(at: playhead)
@@ -1466,13 +1550,17 @@ final class TimelineModel {
         defer { isTranscribing = false }
         do {
             let words = try await TranscriptionService.transcribe(url: clip.asset.url, locale: locale)
-            let lo = clip.offsetInAsset, hi = clip.offsetInAsset + clip.duration
+            let lo = clip.offsetInAsset, hi = clip.offsetInAsset + clip.sourceSpan
             let inside = words.filter { $0.start + $0.duration > lo && $0.start < hi }
             let cues = TranscriptionService.cues(from: inside).map {
                 CaptionCue(start: max($0.start, lo), end: min($0.end, hi), text: $0.text)
             }
-            // waktu media → waktu timeline
-            addCaptions(cues, timeOffset: clip.startTime - clip.offsetInAsset)
+            // waktu media → waktu timeline (memperhitungkan kecepatan klip)
+            if clip.isRetimed {
+                addCaptions(cues.map { CaptionCue(start: clip.timelineTime(forSource: $0.start), end: clip.timelineTime(forSource: $0.end), text: $0.text) }, timeOffset: 0)
+            } else {
+                addCaptions(cues, timeOffset: clip.startTime - clip.offsetInAsset)
+            }
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -1590,6 +1678,7 @@ final class TimelineModel {
         guard !Task.isCancelled else { return }
         let item = AVPlayerItem(asset: built.composition)
         item.videoComposition = built.videoComposition
+        item.audioTimePitchAlgorithm = .spectral // pitch tetap saat klip diperlambat/dipercepat
         item.audioMix = built.audioMix
         let output = AVPlayerItemVideoOutput(pixelBufferAttributes: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
         item.add(output)
@@ -1863,6 +1952,25 @@ enum CompositionBuilder {
         }
     }
 
+    /// Mengubah kecepatan potongan media yang baru dimasukkan di ujung track. Potongan diproses dari belakang
+    /// supaya posisi potongan yang lebih awal tidak bergeser oleh potongan sebelumnya.
+    private static func applyRetime(_ clip: TimelineClip, to track: AVMutableCompositionTrack) {
+        guard clip.isRetimed, let retime = clip.retime else { return }
+        let pieces = retime.pieces(duration: clip.duration)
+        var sourceCursor = 0.0
+        var sourceBounds: [CMTime] = [time(clip.startTime)]
+        for piece in pieces {
+            sourceCursor += piece.source
+            sourceBounds.append(time(clip.startTime + sourceCursor))
+        }
+        for (i, piece) in pieces.enumerated().reversed() {
+            let from = CMTimeRange(start: sourceBounds[i], end: sourceBounds[i + 1])
+            let target = time(piece.local.upperBound) - time(piece.local.lowerBound)
+            guard from.duration > .zero, target > .zero else { continue }
+            track.scaleTimeRange(from, toDuration: target)
+        }
+    }
+
     static func build(clips: [TimelineClip], roleMix: [AudioRole: RoleMix] = [:], useProxies: Bool = false,
                       management: ColorManagementMode = .off) async -> Result {
         let composition = AVMutableComposition()
@@ -1915,7 +2023,7 @@ enum CompositionBuilder {
                 continue
             }
             let asset = AVURLAsset(url: clip.asset.playbackURL(useProxy: useProxies))
-            let range = CMTimeRange(start: time(clip.offsetInAsset), duration: time(clip.duration))
+            let range = CMTimeRange(start: time(clip.offsetInAsset), duration: time(clip.sourceSpan))
             let at = time(clip.startTime)
 
             if item.useVideo, clip.asset.fileType == .video,
@@ -1926,6 +2034,7 @@ enum CompositionBuilder {
                     index = videoTracks.count - 1
                 }
                 if let index, (try? videoTracks[index].track.insertTimeRange(range, of: source, at: at)) != nil {
+                    applyRetime(clip, to: videoTracks[index].track)
                     videoTracks[index].end = clip.endTime
                     var base = CGAffineTransform.identity
                     if let (rect, preferred) = await orientedRect(of: source), rect.width > 0, rect.height > 0 {
@@ -1958,6 +2067,7 @@ enum CompositionBuilder {
                     index = audioTracks.count - 1
                 }
                 if let index, (try? audioTracks[index].track.insertTimeRange(range, of: source, at: at)) != nil {
+                    applyRetime(clip, to: audioTracks[index].track)
                     audioTracks[index].end = clip.endTime
                     addVolume(audioTracks[index].params, for: clip, roleGain: RoleGain.linear(clip.role, in: roleMix))
                 }

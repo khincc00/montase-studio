@@ -25,7 +25,7 @@ final class SourceMonitor {
 
     init() {
         player.actionAtItemEnd = .pause
-        observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 30), queue: .main) { [weak self] time in
+        observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: CMTimeScale(projectFrameRate)), queue: .main) { [weak self] time in
             MainActor.assumeIsolated { self?.tick(time) }
         }
     }

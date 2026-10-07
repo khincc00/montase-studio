@@ -11,5 +11,5 @@ cd "$ROOT"
 swiftc -swift-version 5 -default-isolation MainActor \
   -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-upcoming-feature InferIsolatedConformances \
   -enable-upcoming-feature GlobalActorIsolatedTypesUsability -O -o "$BIN" \
-  Tools/harness/main.swift Models/*.swift Services/*.swift $(ls KHCutPro/*.swift | grep -v 'UI.swift')
+  Tools/harness/main.swift Models/*.swift Services/*.swift $(ls KHCutPro/*.swift | grep -v -e 'UI.swift' -e DemoProject.swift)
 "$BIN" "$FIX"

@@ -94,6 +94,7 @@ enum ExportEngine {
         }
         if preset != .audioOnly { session.videoComposition = built.videoComposition }
         session.audioMix = built.audioMix
+        session.audioTimePitchAlgorithm = .spectral
         if let range {
             let total = built.composition.duration.seconds
             let end = min(range.upperBound, total)

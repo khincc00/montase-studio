@@ -108,9 +108,9 @@ extension TimelineModel {
             return
         }
         clearBeatMarkers()
-        let lo = clip.offsetInAsset, hi = clip.offsetInAsset + clip.duration
+        let lo = clip.offsetInAsset, hi = clip.offsetInAsset + clip.sourceSpan
         for b in result.beats where b >= lo - 0.001 && b <= hi {
-            markers.append(TimelineMarker(time: clip.startTime + (b - clip.offsetInAsset), name: "Beat", isBeat: true))
+            markers.append(TimelineMarker(time: clip.timelineTime(forSource: b), name: "Beat", isBeat: true))
         }
         markers.sort { $0.time < $1.time }
         detectedBPM = result.bpm
@@ -132,7 +132,7 @@ extension TimelineModel {
             let start = clips[i].startTime
             let natural = start + clips[i].duration
             guard n < order.count - 1, let target = beats.filter({ $0 > start + minimumLength }).min(by: { abs($0 - natural) < abs($1 - natural) }) else { continue }
-            let room = clips[i].asset.duration > 0 ? clips[i].asset.duration - clips[i].offsetInAsset : .infinity
+            let room = clips[i].asset.duration > 0 ? clips[i].localDelta(forSource: clips[i].asset.duration - clips[i].offsetInAsset) : .infinity
             clips[i].duration = min(max(target - start, minimumLength), room)
             reflowForBeats()
         }

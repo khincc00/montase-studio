@@ -281,7 +281,7 @@ struct ViewerView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(title: transport.usesSource ? "Viewer — Source: \(transport.source.asset?.fileName ?? "")" : "Viewer — Timeline") {
-                Text("\(Int(projectFrameRate))p")
+                Text("\(Int(timeline.frameRate))p")
                     .font(.system(size: 10))
                     .foregroundStyle(FCP.secondary)
             }
@@ -446,85 +446,160 @@ struct TimelineToolbar: View {
 
     var body: some View {
         @Bindable var timeline = timeline
-        HStack(spacing: 6) {
-            if let level = timeline.compoundStack.last {
-                Button { timeline.closeCompound() } label: {
-                    Label(level.name, systemImage: "chevron.left").font(.system(size: 10, weight: .medium))
+        HStack(spacing: 8) {
+            // Group 1: Breadcrumb & Mode Alat
+            HStack(spacing: 4) {
+                if let level = timeline.compoundStack.last {
+                    Button { timeline.closeCompound() } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text(level.name)
+                                .lineLimit(1)
+                                .frame(maxWidth: 90)
+                        }
+                        .font(.system(size: 10, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Kembali ke timeline induk")
+                }
+
+                HStack(spacing: 2) {
+                    ForEach(EditTool.allCases, id: \.self) { tool in
+                        Button { timeline.tool = tool } label: {
+                            Image(systemName: tool.icon)
+                                .font(.system(size: 10.5))
+                                .frame(width: 25, height: 21)
+                                .background(timeline.tool == tool ? FCP.selection.opacity(0.25) : Color.clear)
+                                .foregroundStyle(timeline.tool == tool ? FCP.selection : .white.opacity(0.85))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
+                        .buttonStyle(.plain)
+                        .help("\(tool.title) Tool (\(tool.key))")
+                    }
+                }
+                .padding(1)
+                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 5))
+
+                if timeline.tool == .trim {
+                    Picker("", selection: $timeline.trimMode) {
+                        ForEach(TrimMode.allCases, id: \.self) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .controlSize(.mini)
+                    .frame(width: 190)
+                    .help(timeline.trimMode.help)
+                }
+
+                Button {
+                    timeline.splitAtPlayhead()
+                } label: {
+                    Image(systemName: "scissors")
+                        .font(.system(size: 10))
+                        .frame(width: 22, height: 21)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 4))
+                }
+                .buttonStyle(.plain)
+                .help("Blade di Playhead (⌘B)")
+            }
+
+            Rectangle().fill(FCP.border).frame(width: 1, height: 16)
+
+            // Group 2: Storyline Insertions & Marker
+            HStack(spacing: 4) {
+                editButton("Connect", icon: "arrow.down.to.line.compact", key: "Q", operation: .connect)
+                editButton("Insert", icon: "arrow.down.right.and.arrow.up.left", key: "W", operation: .insert)
+                editButton("Append", icon: "arrow.right.to.line", key: "E", operation: .append)
+
+                Button { timeline.addMarker() } label: {
+                    Label("Marker", systemImage: "bookmark.fill")
+                        .font(.system(size: 10))
+                        .labelStyle(.titleAndIcon)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .help("Kembali ke timeline induk")
+                .help("Tambah Marker di Playhead (M)")
             }
 
-            ForEach(EditTool.allCases, id: \.self) { tool in
-                Button { timeline.tool = tool } label: {
-                    Image(systemName: tool.icon)
-                        .font(.system(size: 11))
-                        .frame(width: 26, height: 20)
-                        .background(timeline.tool == tool ? Color.white.opacity(0.22) : .clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
+            Spacer()
+
+            // Timecode & Shuttle rate
+            HStack(spacing: 6) {
+                TimecodeText(size: 12, timelineOnly: true)
+                    .foregroundStyle(.white)
+                if timeline.shuttleRate != 0, timeline.shuttleRate != 1 {
+                    Text(timeline.shuttleRate < 0 ? "◀◀ \(Int(abs(timeline.shuttleRate)))×" : "▶▶ \(Int(timeline.shuttleRate))×")
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(FCP.selection.opacity(0.2), in: RoundedRectangle(cornerRadius: 3))
+                        .foregroundStyle(FCP.selection)
+                }
+            }
+
+            Spacer()
+
+            // Group 3: Snapping & Zoom
+            HStack(spacing: 6) {
+                Button {
+                    timeline.snapping.toggle()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: timeline.snapping ? "magnet.fill" : "magnet")
+                            .font(.system(size: 10))
+                        Text("Snap")
+                            .font(.system(size: 10, weight: timeline.snapping ? .semibold : .regular))
+                    }
+                    .padding(.horizontal, 6)
+                    .frame(height: 21)
+                    .background(timeline.snapping ? FCP.selection.opacity(0.2) : Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 4))
+                    .foregroundStyle(timeline.snapping ? FCP.selection : FCP.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("\(tool.title) (\(tool.key)); select clips or drag.")
-            }
+                .help("Snapping Magnet (N)")
 
-            if timeline.tool == .trim {
-                Picker("", selection: $timeline.trimMode) {
-                    ForEach(TrimMode.allCases, id: \.self) { Text($0.title).tag($0) }
+                Rectangle().fill(FCP.border).frame(width: 1, height: 16)
+
+                Button {
+                    let available = max(100, viewportWidth - 30)
+                    timeline.zoom = min(240, max(0.25, Double(available) / max(1, timeline.totalDuration + 15)))
+                } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 10.5))
+                        .frame(width: 22, height: 21)
+                        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 4))
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .controlSize(.small)
-                .frame(width: 210)
-                .help(timeline.trimMode.help)
+                .buttonStyle(.plain)
+                .help("Sesuaikan Timeline ke Layar (Fit)")
+
+                Button {
+                    timeline.zoom = max(0.25, timeline.zoom * 0.75)
+                } label: {
+                    Image(systemName: "minus.magnifyingglass")
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(FCP.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Perkecil Tampilan Timeline")
+
+                Slider(value: $timeline.zoom, in: 0.25...240)
+                    .frame(width: 80)
+                    .controlSize(.mini)
+
+                Button {
+                    timeline.zoom = min(240, timeline.zoom * 1.35)
+                } label: {
+                    Image(systemName: "plus.magnifyingglass")
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(FCP.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Perbesar Tampilan Timeline")
             }
-
-            Divider().frame(height: 16).padding(.horizontal, 4)
-
-            editButton("Connect", icon: "arrow.down.to.line.compact", key: "Q", operation: .connect)
-            editButton("Insert", icon: "arrow.down.right.and.arrow.up.left", key: "W", operation: .insert)
-            editButton("Append", icon: "arrow.right.to.line", key: "E", operation: .append)
-
-            Button { showEffects.toggle() } label: {
-                Label("Efek", systemImage: "sparkles.rectangle.stack").font(.system(size: 10)).labelStyle(.titleAndIcon)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help("Judul, transisi, dan look 1-klik")
-            .popover(isPresented: $showEffects) { EffectsGallery() }
-
-            Spacer()
-            TimecodeText(size: 14, timelineOnly: true).foregroundStyle(.white)
-            if timeline.shuttleRate != 0, timeline.shuttleRate != 1 {
-                Text(timeline.shuttleRate < 0 ? "◀◀ \(Int(abs(timeline.shuttleRate)))×" : "▶▶ \(Int(timeline.shuttleRate))×")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(FCP.selection)
-            }
-            Spacer()
-
-            Toggle("Snap", isOn: $timeline.snapping)
-                .toggleStyle(.button)
-                .controlSize(.small)
-                .help("Snapping (N)")
-
-            Button {
-                let available = max(100, viewportWidth - 30)
-                timeline.zoom = min(240, max(0.25, Double(available) / max(1, timeline.totalDuration + 15)))
-            } label: {
-                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    .font(.system(size: 11))
-            }
-            .buttonStyle(.plain)
-            .help("Fit entire timeline in view")
-
-            Image(systemName: "minus.magnifyingglass").font(.system(size: 10)).foregroundStyle(FCP.secondary)
-            Slider(value: $timeline.zoom, in: 0.25...240)
-                .frame(width: 100)
-                .controlSize(.small)
-            Image(systemName: "plus.magnifyingglass").font(.system(size: 10)).foregroundStyle(FCP.secondary)
         }
         .padding(.horizontal, 10)
-        .frame(height: 30)
+        .frame(height: 32)
         .background(FCP.header)
         .overlay(alignment: .bottom) { Rectangle().fill(FCP.border).frame(height: 1) }
     }
@@ -744,6 +819,9 @@ struct TimelineClipView: View {
     @State private var headTrim: CGFloat = 0
     @State private var tailTrim: CGFloat = 0
     @State private var slipText: String?
+    @State private var trimText: String?
+    @State private var trimHover: ClipEdge?
+    @State private var trimDragging: ClipEdge?
     @State private var fadeDragging = false
 
     private var laneStep: CGFloat { 38 * timelineScale + 3 }
@@ -824,7 +902,7 @@ struct TimelineClipView: View {
                 fadeHandle(isIn: true, width: width, zoom: zoom)
                 fadeHandle(isIn: false, width: width, zoom: zoom)
             }
-            if let slipText {
+            if let slipText = slipText ?? trimText {
                 Text(slipText)
                     .font(.system(size: 10, weight: .bold, design: .monospaced))
                     .padding(4)
@@ -878,6 +956,11 @@ struct TimelineClipView: View {
         )
         .contextMenu {
             Button("Blade at Playhead") { timeline.select(clip.id); timeline.splitAtPlayhead() }
+            Button("Trim Start ke Playhead") { timeline.select(clip.id); timeline.trimStartToPlayhead() }
+            Button("Trim End ke Playhead") { timeline.select(clip.id); timeline.trimEndToPlayhead() }
+            if timeline.markIn != nil, timeline.markOut != nil {
+                Button("Trim ke Range In/Out") { timeline.select(clip.id); timeline.trimToRange() }
+            }
             if clip.isTitle {
                 Button(clip.title?.isCaption == true ? "Edit Caption Text…" : "Edit Title Text…",
                        systemImage: "text.cursor") {
@@ -1041,22 +1124,31 @@ struct TimelineClipView: View {
 
     private func trimHandle(_ edge: ClipEdge) -> some View {
         let rolling = rollNeighbor(edge) != nil
+        let active = trimHover == edge || trimDragging == edge
+        let fill: Color = rolling ? .orange.opacity(0.9)
+            : (active ? .white.opacity(0.85) : (isSelected ? FCP.selection.opacity(0.9) : (timeline.tool == .trim ? .white.opacity(0.3) : .clear)))
         return Rectangle()
-            .fill(rolling ? Color.orange.opacity(0.9) : (isSelected ? FCP.selection.opacity(0.9) : (timeline.tool == .trim ? Color.white.opacity(0.3) : Color.clear)))
-            .frame(width: 7)
+            .fill(fill)
+            .frame(width: 10)
             .contentShape(Rectangle())
             .pointerStyle(.columnResize)
+            .onHover { trimHover = $0 ? edge : (trimHover == edge ? nil : trimHover) }
+            .help(edge == .head ? "Seret untuk trim awal klip" : "Seret untuk trim akhir klip")
             .gesture(
                 DragGesture(minimumDistance: 1)
                     .onChanged { value in
                         guard handlesEnabled else { return }
-                        let delta = allowedDelta(edge, value.translation.width / timeline.zoom)
+                        trimDragging = edge
+                        let delta = previewDelta(edge, value.translation.width / timeline.zoom)
                         if edge == .head { headTrim = delta * timeline.zoom } else { tailTrim = delta * timeline.zoom }
+                        trimText = String(format: "%@ %+.2fs", edge == .head ? "Awal" : "Akhir", delta)
                     }
                     .onEnded { value in
-                        let delta = value.translation.width / timeline.zoom
+                        let delta = previewDelta(edge, value.translation.width / timeline.zoom)
                         headTrim = 0
                         tailTrim = 0
+                        trimDragging = nil
+                        trimText = nil
                         guard handlesEnabled else { return }
                         if let n = rollNeighbor(edge) {
                             if edge == .head { timeline.roll(left: n.id, right: clip.id, delta: delta) }
@@ -1067,12 +1159,29 @@ struct TimelineClipView: View {
                     }
             )
     }
+
+    /// Delta yang dipakai preview dan commit: di-snap lalu dibatasi ruang media. Roll tidak di-snap.
+    private func previewDelta(_ edge: ClipEdge, _ proposed: Double) -> Double {
+        let snapped = rollNeighbor(edge) == nil ? timeline.snappedTrimDelta(clip, edge: edge, delta: proposed) : proposed
+        return allowedDelta(edge, snapped)
+    }
 }
 
 // MARK: - Inspector
 
 struct InspectorView: View {
-    enum Tab: String, CaseIterable { case video = "Video", color = "Color", audio = "Audio", info = "Info" }
+    enum Tab: String, CaseIterable {
+        case video = "Video", color = "Color", audio = "Audio", info = "Info"
+
+        var icon: String {
+            switch self {
+            case .video: "film"
+            case .color: "paintpalette"
+            case .audio: "waveform"
+            case .info: "info.circle"
+            }
+        }
+    }
 
     @Environment(TimelineModel.self) private var timeline
     @Environment(MediaLibrary.self) private var library
@@ -1081,13 +1190,31 @@ struct InspectorView: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(title: "Inspector") { EmptyView() }
-            Picker("", selection: $selectedTab) {
-                ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0.rawValue) }
+            HStack(spacing: 3) {
+                ForEach(Tab.allCases, id: \.self) { tab in
+                    Button {
+                        selectedTab = tab.rawValue
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 9.5))
+                            Text(tab.rawValue)
+                                .font(.system(size: 10, weight: selectedTab == tab.rawValue ? .semibold : .regular))
+                        }
+                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity)
+                        .background(selectedTab == tab.rawValue ? Color.white.opacity(0.12) : Color.white.opacity(0.02),
+                                    in: RoundedRectangle(cornerRadius: 5))
+                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(selectedTab == tab.rawValue ? FCP.selection.opacity(0.5) : Color.clear, lineWidth: 1))
+                        .foregroundStyle(selectedTab == tab.rawValue ? FCP.selection : FCP.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Tab Inspector: \(tab.rawValue)")
+                }
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .controlSize(.small)
-            .padding(8)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Color.black.opacity(0.2))
 
             if let clip = timeline.selectedClip {
                 ScrollView {
@@ -1151,6 +1278,7 @@ struct InspectorView: View {
                 AnimatedSlider(clipID: clip.id, property: .opacity)
             }
         } else if clip.asset.fileType == .video || clip.asset.fileType == .image || clip.multicam != nil {
+            if clip.canRetime { RetimeSection(clip: clip) }
             InspectorSection(title: "Compositing") {
                 if clip.asset.fileType == .video {
                     Toggle("Hapus Latar (Person)", isOn: Binding(
@@ -1380,6 +1508,7 @@ struct InspectorView: View {
     @ViewBuilder
     private func audioSections(_ clip: TimelineClip) -> some View {
         if clip.asset.hasAudio || clip.multicam != nil {
+            if clip.asset.fileType == .audio, clip.canRetime { RetimeSection(clip: clip) }
             RoleMixerSection(clip: clip)
             InspectorSection(title: "Volume") {
                 AnimatedSlider(clipID: clip.id, property: .volume)

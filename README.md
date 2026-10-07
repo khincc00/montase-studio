@@ -20,6 +20,8 @@ Editor video macOS (SwiftUI + AVFoundation + Core Image) dengan tata letak dan a
 - Multicam 2–16 angle disinkronkan otomatis lewat audio, ganti angle saat playback.
 - Compound clip (bisa dibuka dan diedit), audition (beberapa take dalam satu slot).
 - Source monitor dengan tanda In/Out dan three-point edit (E/W/Q), J-K-L shuttle sampai 8×.
+- Speed per klip: preset (slow-mo 50%/25%, 2×, 4×) atau kecepatan konstan 0.1×–8×, serta speed ramp berbasis titik kecepatan (preset Normal→Lambat, Lambat→Cepat, Hero, Flash) di Inspector. Durasi klip menyesuaikan, potongan media tetap; audio ikut berubah dengan pitch dipertahankan. Blade, trim, roll, slide, caption, dan beat marker memperhitungkan kecepatan.
+- Frame rate project 24 / 30 / 60 fps, dipilih dari label fps di samping timecode. Memengaruhi timecode, langkah frame, frame duration preview/export, dan FCPXML; tersimpan di file project.
 - Marker, beat detection (tempo + posisi beat) dan potong klip sesuai beat.
 - Adjustment layer untuk menerapkan grade warna ke beberapa klip di bawahnya dalam satu rentang.
 - Versi/snapshot dengan rollback, simpan/buka project `.khcutpro`.
@@ -63,27 +65,49 @@ Editor video macOS (SwiftUI + AVFoundation + Core Image) dengan tata letak dan a
 | Simpan / buka / versi | `⌘S` / `⌘O` / `⌥⌘S` (daftar `⌥⌘V`) |
 | Import / export | `⌘I` / `⌘E`, FCPXML `⇧⌘E` |
 
-Pintasan alat Select, Trim, dan Blade dapat diubah dari **KHCutPro > Settings > Keyboard shortcuts**.
+Semua pintasan (File, Edit, Clip, Trim, Tools, Mark, Playback, Media, Audition, Multicam) dapat diubah, dikosongkan, di-reset, diekspor, dan diimpor dari **KHCutPro > Settings > Pintasan**.
+
+Trim di timeline: seret tepi klip (snap ke playhead/marker/klip lain, label durasi langsung), menu **Trim** (Trim Start/End ke Playhead, Trim ke Range In/Out, ±1 frame), dan menu klik kanan klip.
 
 ## Batasan yang perlu diketahui
 
 - Tidak ada dukungan Blackmagic RAW, RED RAW, ProRes RAW, DNxHD/HR, AAF, `.mogrt`, dan project native Premiere/Resolve. MXF hanya dapat dibuka bila codec internalnya didukung AVFoundation.
-- Belum ada speed ramp per klip; J-K-L hanya mengubah kecepatan playback.
+- Speed ramp hanya untuk klip video/audio biasa (bukan judul, adjustment layer, compound, atau multicam). Perlambatan tidak membuat frame baru (frame diulang, tanpa optical flow/frame blending). Stabilizer, point tracker, dan Auto-Sync menolak klip yang kecepatannya diubah (kembalikan ke 1× dulu). FCPXML tidak membawa data retime.
 - Planar tracker dan Voice Isolation berbasis AI belum ada; "reduksi derau" memakai gate dan high-pass.
 - ACES memakai kurva pendekatan, bukan RRT/ODT resmi. Transformasi input memakai cube 65³.
 - Adjustment layer dapat diekspor sebagai video, tetapi tidak dapat direpresentasikan sebagai efek di FCPXML; ekspor FCPXML ditolak selama adjustment layer masih ada.
-- Frame rate project tetap 30 fps. Hanya satu level compound yang bisa dibuka di Inspector sekaligus.
+- Frame rate project hanya 24, 30, atau 60 fps (tidak ada 23.976/29.97/59.94 drop-frame). Parser EDL mengasumsikan fps project aktif. Hanya satu level compound yang bisa dibuka di Inspector sekaligus.
 - Ekspor FCPXML menyederhanakan compound, multicam, transisi, dan audition menjadi klip biasa.
 - Publish langsung ke YouTube belum ada (butuh kredensial OAuth).
 - Level meter adalah perkiraan dari waveform sumber dan penguatan klip, bukan pengukuran keluaran mixer.
 
+## Titik rawan (diawasi saat mengubah kode)
+
+- **Proxy**: preview boleh memakai proxy, tetapi ekspor selalu membangun komposisi dari file asli; periksa toggle proxy sebelum mem-relink media.
+- **Watch folder / relink**: file baru baru diimpor setelah ukurannya stabil di dua pemeriksaan; jangan memindahkan media saat render berjalan.
+- **Compound + multicam sync**: sinkronisasi audio bisa meleset bila ada drift antar perangkat; periksa angle yang panjang secara manual.
+- **Adjustment layer, stabilizer, point tracking**: berat saat preview; analisis berjalan sekali per permintaan, bukan per frame.
+- **Beat detection**: tempo bisa meleset pada musik tanpa ritme jelas (mis. gamelan/dangdut dengan tempo berubah); beat bisa dihapus lalu ditandai ulang.
+- **Secondary qualifier + power window**: tepi mengikuti feather; naikkan feather bila tepi terlihat kasar.
+- **Auto-sync audio eksternal**: bergantung pada audio kamera yang cukup mirip dengan audio eksternal.
+
 ## Struktur kode
 
 - `Models/TimelineModel.swift`: klip, library, operasi timeline, builder komposisi.
-- `KHCutPro/`: engine (animasi, warna, compositor, audio DSP, multicam, tracking, beat, export) dan view tambahan (`*UI.swift`). Folder ini otomatis ikut target app.
+- `KHCutPro/`: engine (animasi, warna, compositor, audio DSP, multicam, tracking, beat, retime/speed ramp, export) dan view tambahan (`*UI.swift`). Folder ini otomatis ikut target app.
 - `Services/`: identifikasi media dan parser FCPXML/xmeml/EDL.
 - `Views/`, `Sources/App.swift`: antarmuka dan menu.
 
 ## Pengujian
 
-`Tools/run_harness.sh` mengompilasi model dan engine (tanpa UI) menjadi satu executable dan menjalankan ratusan pemeriksaan terhadap media sintetis buatan `ffmpeg` (sinkronisasi multicam, render keyframe/keyer/node, codec export, stabilizer, beat, DSP audio, dan lainnya). Satu putaran penuh memakan beberapa menit.
+`Tools/run_harness.sh` mengompilasi model dan engine (tanpa UI) menjadi satu executable dan menjalankan ratusan pemeriksaan terhadap media sintetis buatan `ffmpeg` (sinkronisasi multicam, render keyframe/keyer/node, codec export, stabilizer, beat, DSP audio, speed ramp, frame rate 24/30/60, dan lainnya). Satu putaran penuh memakan beberapa menit.
+
+## Demo project
+
+`DemoProject/Media` berisi footage ilustrasi orisinal dan audio sintetis untuk project contoh **ISLAND LIGHT**. Untuk membukanya saat menjalankan app, teruskan argumen `--demo-project` diikuti path absolut ke folder tersebut. Contoh:
+
+```sh
+open -na "/path/to/KHCutPro.app" --args --demo-project "$PWD/DemoProject/Media"
+```å
+
+Project ini menampilkan footage utama, B-roll, judul, adjustment layer, musik, dan ambience. File project disimpan di Application Support milik app. Screenshot editor: [Island-Light-Screenshot.png](./DemoProject/Island-Light-Screenshot.png).

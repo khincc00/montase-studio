@@ -72,6 +72,44 @@ do {
     expect(t.clip(p[1].id)!.offsetInAsset + t.clip(p[1].id)!.duration <= a.duration + 0.01, "slip clamped to media")
 }
 
+print("== trim ke playhead / range / frame + pintasan")
+do {
+    let a = await asset("camA.mp4")
+    let t = TimelineModel(); t.append(a)
+    let d = t.clips[0].duration
+    t.seek(to: 2); t.trimStartToPlayhead()
+    var c = primary(t)[0]
+    expect(abs(c.duration - (d - 2)) < 0.02 && abs(c.offsetInAsset - 2) < 0.02, "trim start ke playhead memotong 2 detik awal")
+    t.seek(to: 3); t.trimEndToPlayhead(); c = primary(t)[0]
+    expect(abs(c.duration - 3) < 0.05, "trim end ke playhead memangkas ekor (durasi \(c.duration))")
+    t.select(c.id); t.nudgeTrim(edge: .tail, frames: -3); let c2 = primary(t)[0]
+    expect(abs((c.duration - c2.duration) - 3 / t.frameRate) < 0.01, "nudge ekor -3 frame")
+    t.markIn = 0.5; t.markOut = 1.5; t.select(c2.id); t.trimToRange()
+    let c3 = primary(t)[0]
+    expect(abs(c3.duration - 1) < 0.05 && abs(c3.offsetInAsset - c2.offsetInAsset - 0.5) < 0.05, "trim ke range In/Out menyisakan 1 detik")
+    t.undo(); expect(primary(t)[0].duration > 1.2, "undo trim")
+
+    let suite = UserDefaults(suiteName: "khcutpro.harness.shortcuts")!
+    suite.removePersistentDomain(forName: "khcutpro.harness.shortcuts")
+    let store = ShortcutStore(defaults: suite)
+    expect(store.combo(for: .blade) == KeyCombo("b", .command), "pintasan bawaan blade ⌘B")
+    var seen = Set<KeyCombo>(); var dupes = 0
+    for def in ShortcutCatalog.all { if let k = def.defaultCombo, !seen.insert(k).inserted { dupes += 1 } }
+    expect(dupes == 0, "tidak ada pintasan bawaan yang bentrok (\(dupes))")
+    expect(store.assign(KeyCombo("b", .command), to: .toolSelect) == .displaced(.blade) && store.combo(for: .blade) == nil, "bentrok mengosongkan aksi lama")
+    expect(store.assign(KeyCombo("q", .command), to: .toolTrim) == .reserved, "⌘Q ditolak")
+    store.assign(KeyCombo("x"), to: .trimStart)
+    let again = ShortcutStore(defaults: suite)
+    expect(again.combo(for: .trimStart) == KeyCombo("x") && again.combo(for: .blade) == nil && again.combo(for: .toolSelect) == KeyCombo("b", .command), "pintasan tersimpan dan terbaca ulang")
+    let exported = again.exportData()!
+    again.resetAll()
+    expect(again.combo(for: .blade) == KeyCombo("b", .command) && !again.isCustomized(.trimStart), "reset semua")
+    expect(again.importData(exported) && again.combo(for: .trimStart) == KeyCombo("x"), "impor memulihkan")
+    again.reset(.toolSelect)
+    expect(again.combo(for: .toolSelect) == KeyCombo("a"), "reset satu aksi")
+    expect(ShortcutCatalog.all.count == Set(ShortcutCatalog.all.map { $0.action.id }).count, "id aksi unik")
+}
+
 print("== compound / audition")
 do {
     let a = await asset("camA.mp4"), b = await asset("camB.mp4"), c = await asset("camC.mp4")
@@ -809,6 +847,93 @@ do {
     let lm = luma(try await frame(managedURL, 1)), lp = luma(try await frame(plainURL, 1))
     print("   luma managed=\(lm) plain=\(lp)")
     expect(abs(lm - lp) > 8, "input colour space changes the rendered image")
+}
+
+print("== speed ramp per klip")
+do {
+    let c = Retime(speed: 2)
+    expect(abs(c.span(10) - 20) < 1e-9 && abs(c.local(forSpan: 20) - 10) < 1e-6, "kecepatan konstan 2×: 10s timeline = 20s media")
+    let r = Retime(speed: 1, keys: [SpeedKey(time: 0, speed: 1), SpeedKey(time: 4, speed: 3)])
+    expect(abs(r.span(4) - 8) < 1e-9 && abs(r.local(forSpan: r.span(2.5)) - 2.5) < 1e-6, "ramp linear: integral eksak dan invers konsisten")
+    expect(abs(r.speed(at: 2) - 2) < 1e-9 && abs(r.speed(at: 9) - 3) < 1e-9, "kecepatan diinterpolasi lalu ditahan di ujung")
+
+    let a = await asset("camA.mp4")
+    let t = TimelineModel(); t.append(a)
+    let id = t.clips[0].id
+    let media = t.clip(id)!.duration
+    t.setSpeed(id, 2)
+    var c0 = t.clip(id)!
+    expect(abs(c0.duration - media / 2) < 0.01 && abs(c0.sourceSpan - media) < 0.01, "speed 2× memendekkan klip, media yang dipakai tetap")
+    t.setSpeed(id, 0.5); c0 = t.clip(id)!
+    expect(abs(c0.duration - media * 2) < 0.01, "speed 0.5× memperpanjang klip")
+    t.setSpeed(id, 2); c0 = t.clip(id)!
+    t.split(id, at: 4)
+    var p = primary(t)
+    expect(p.count == 2 && abs(p[0].duration - 4) < 0.01 && abs(p[1].offsetInAsset - 8) < 0.01 && abs(p[1].duration - (media / 2 - 4)) < 0.01, "split klip ber-speed: offset media = 2× waktu timeline")
+    expect(abs(p[0].sourceSpan + p[1].sourceSpan - media) < 0.01 && p[1].retime?.speed == 2, "potongan kiri+kanan menutup media persis")
+    let room = p[1].tailRoom
+    expect(abs(room) < 0.02, "tail tidak bisa dipanjangkan melewati akhir media")
+    t.trim(p[1].id, edge: .head, delta: 1); p = primary(t)
+    expect(abs(p[1].offsetInAsset - 10) < 0.01, "trim kepala 1s timeline memajukan media 2s")
+
+    // preset ramp mempertahankan potongan media
+    let t2 = TimelineModel(); t2.append(a); let id2 = t2.clips[0].id
+    t2.applyRetimePreset(id2, .hero)
+    let h = t2.clip(id2)!
+    expect(h.retime?.isRamp == true && abs(h.sourceSpan - media) < 0.01, "preset Hero: ramp aktif, media yang dipakai tetap (\(String(format: "%.2f", h.duration))s)")
+    let firstSlow = h.retime!.speed(at: h.duration * 0.5)
+    expect(abs(firstSlow - 0.25) < 0.01, "preset Hero: bagian tengah melambat 0.25×")
+
+    // komposisi AVFoundation benar-benar mengikuti kecepatan
+    let t3 = TimelineModel(); t3.append(a); t3.setSpeed(t3.clips[0].id, 2)
+    var built = await CompositionBuilder.build(clips: t3.clips)
+    expect(abs(built.composition.duration.seconds - media / 2) < 0.05, "komposisi 2× berdurasi setengah (\(String(format: "%.2f", built.composition.duration.seconds))s)")
+    built = await CompositionBuilder.build(clips: t2.clips)
+    expect(abs(built.composition.duration.seconds - h.duration) < 0.1, "komposisi speed ramp berdurasi sesuai kurva (\(String(format: "%.2f", built.composition.duration.seconds)) vs \(String(format: "%.2f", h.duration)))")
+    let url = try await exportClips(t3.clips, name: "speed2x")
+    let ex = AVURLAsset(url: url)
+    let exd = try await ex.load(.duration).seconds
+    expect(abs(exd - media / 2) < 0.2, "ekspor 2× berdurasi \(String(format: "%.2f", exd))s")
+    let exAudio = try await ex.loadTracks(withMediaType: .audio)
+    expect(!exAudio.isEmpty, "audio ikut di ekspor ber-speed")
+    // gambar pada detik 2 timeline (2×) = detik 4 media: harus sama dengan klip 1× di detik 4
+    let ref = try await exportClips([TimelineClip(asset: a, startTime: 0, duration: 8, lane: 0)], name: "speed1x")
+    let l2 = luma(try await frame(url, 2)), l1 = luma(try await frame(ref, 4))
+    expect(abs(l2 - l1) < 6, "frame 2× pada 2s cocok dengan frame 1× pada 4s (luma \(Int(l2)) vs \(Int(l1)))")
+
+    // simpan/muat
+    let data = try JSONEncoder().encode(t2.clips)
+    let back = try JSONDecoder().decode([TimelineClip].self, from: data)
+    expect(back[0].retime == t2.clips[0].retime, "speed ramp tersimpan di file project")
+    var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(t.clips)) as! [[String: Any]]
+    json[0].removeValue(forKey: "retime")
+    let old = try JSONDecoder().decode([TimelineClip].self, from: JSONSerialization.data(withJSONObject: json))
+    expect(old[0].retime == nil && !old[0].isRetimed, "project lama tanpa speed tetap terbaca")
+}
+
+print("== frame rate project")
+do {
+    let a = await asset("camA.mp4")
+    for fps in [24.0, 60.0, 30.0] {
+        let t = TimelineModel(); t.setFrameRate(fps); t.append(a)
+        expect(projectFrameRate == fps && t.frameRate == fps, "frame rate diatur ke \(Int(fps))")
+        expect(timecodeString(0.5) == String(format: "00:00:00:%02d", Int(fps / 2)), "timecode 0.5s = frame \(Int(fps / 2)) pada \(Int(fps)) fps (\(timecodeString(0.5)))")
+        expect(timecodeString(61) == "00:01:01:00", "timecode 61s tepat pada \(Int(fps)) fps")
+        let built = await CompositionBuilder.build(clips: t.clips)
+        let fd = built.videoComposition?.frameDuration
+        expect(fd != nil && abs(fd!.seconds - 1 / fps) < 1e-6, "frame duration render = 1/\(Int(fps))")
+        let before = t.playhead
+        t.seek(to: 1.0); t.step(frames: 1)
+        expect(abs(t.playhead - (1.0 + 1 / fps)) < 1e-6, "step 1 frame = 1/\(Int(fps)) detik (\(before))")
+        if fps != 30 {
+            let url = URL(fileURLWithPath: "\(dir)/fps\(Int(fps)).mp4") // preset ekspor asli (Medium Quality membatasi 30 fps)
+            try await ExportEngine.run(clips: [TimelineClip(asset: a, startTime: 0, duration: 3, lane: 0)], preset: .h264HD, to: url, range: nil)
+            let track = try await AVURLAsset(url: url).loadTracks(withMediaType: .video)[0]
+            let nominal = Double(try await track.load(.nominalFrameRate))
+            expect(abs(nominal - fps) < 1.5, "file ekspor \(Int(fps)) fps terbaca \(String(format: "%.1f", nominal)) fps")
+        }
+    }
+    expect(projectFrameRate == 30, "frame rate dikembalikan ke 30")
 }
 
 print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")

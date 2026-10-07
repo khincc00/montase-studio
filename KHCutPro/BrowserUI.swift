@@ -38,14 +38,14 @@ struct BrowserToolbar: View {
             .padding(.horizontal, 8).frame(height: 24)
             .background(Color.black.opacity(0.35), in: RoundedRectangle(cornerRadius: 5))
 
-            HStack(spacing: 6) {
+            HStack(spacing: 3) {
+                quickFilterButton(title: "Semua", filter: .all)
+                quickFilterButton(title: "Video", icon: "film", filter: .video)
+                quickFilterButton(title: "Audio", icon: "waveform", filter: .audio)
+                quickFilterButton(title: "Gambar", icon: "photo", filter: .image)
+                quickFilterButton(title: "Favorit", icon: "star.fill", filter: .favorites)
+
                 Menu {
-                    Button("Semua Media") { library.activeFilter = .all }
-                    Button("Video") { library.activeFilter = .video }
-                    Button("Audio") { library.activeFilter = .audio }
-                    Button("Gambar") { library.activeFilter = .image }
-                    Divider()
-                    Button("Favorit") { library.activeFilter = .favorites }
                     Button("Ditolak") { library.activeFilter = .rejected }
                     Button("Offline") { library.activeFilter = .offline }
                     Button("Tanpa Keyword") { library.activeFilter = .noKeywords }
@@ -71,17 +71,27 @@ struct BrowserToolbar: View {
                         }
                     }
                 } label: {
-                    Label(filterTitle, systemImage: "line.3.horizontal.decrease.circle").font(.system(size: 10))
+                    HStack(spacing: 2) {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 8.5))
+                        if isSecondaryFilterActive {
+                            Circle().fill(FCP.selection).frame(width: 4, height: 4)
+                        }
+                    }
+                    .frame(width: 22, height: 20)
+                    .background(isSecondaryFilterActive ? FCP.selection.opacity(0.2) : Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 4))
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
+                .help(filterTitle)
 
                 Spacer()
 
                 Toggle("Proxy", isOn: Binding(get: { timeline.useProxies }, set: { timeline.setUseProxies($0) }))
                     .toggleStyle(.button)
-                    .controlSize(.small)
+                    .controlSize(.mini)
                     .help("Edit memakai proxy ringan; export tetap memakai file asli")
+
                 Menu {
                     Button("Buat Proxy untuk Semua Video") { Task { await library.generateAllProxies(timeline: timeline) } }
                     Toggle("Proxy otomatis untuk media 4K+", isOn: $library.autoProxy)
@@ -91,7 +101,7 @@ struct BrowserToolbar: View {
                     } else {
                         Button("Pantau Folder (Watch Folder)…") { library.chooseWatchFolder(timeline: timeline) }
                     }
-                } label: { Image(systemName: "ellipsis.circle") }
+                } label: { Image(systemName: "ellipsis.circle").font(.system(size: 11)) }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
             }
@@ -117,6 +127,38 @@ struct BrowserToolbar: View {
         } message: {
             Text("Koleksi otomatis menampilkan media yang cocok dengan filter dan pencarian saat ini.")
         }
+    }
+
+    private var isSecondaryFilterActive: Bool {
+        switch library.activeFilter {
+        case .all, .video, .audio, .image, .favorites:
+            return false
+        default:
+            return true
+        }
+    }
+
+    private func quickFilterButton(title: String, icon: String? = nil, filter: LibraryFilter) -> some View {
+        let isActive = library.activeFilter == filter
+        return Button {
+            library.activeFilter = filter
+        } label: {
+            HStack(spacing: 3) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 8))
+                }
+                Text(title)
+                    .font(.system(size: 9.5, weight: isActive ? .semibold : .regular))
+            }
+            .padding(.horizontal, 5)
+            .frame(height: 20)
+            .background(isActive ? FCP.selection.opacity(0.22) : Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 4))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(isActive ? FCP.selection.opacity(0.6) : Color.clear, lineWidth: 1))
+            .foregroundStyle(isActive ? FCP.selection : FCP.secondary)
+        }
+        .buttonStyle(.plain)
+        .help("Filter media: \(title)")
     }
 }
 
