@@ -82,30 +82,74 @@ struct KhinccCutProApp: App {
                 Divider()
                 item("Next Keyframe", .nextKeyframe) { timeline.jumpToKeyframe(forward: true) }
                 item("Previous Keyframe", .previousKeyframe) { timeline.jumpToKeyframe(forward: false) }
-            }
-
-            CommandMenu("Trim") {
-                item("Trim Start ke Playhead", .trimStart) { timeline.trimStartToPlayhead() }
-                item("Trim End ke Playhead", .trimEnd) { timeline.trimEndToPlayhead() }
-                item("Trim ke Range In/Out", .trimToRange) { timeline.trimToRange() }
                 Divider()
-                item("Trim Start −1 Frame", .trimStartBack) { timeline.nudgeTrim(edge: .head, frames: -1) }
-                item("Trim Start +1 Frame", .trimStartForward) { timeline.nudgeTrim(edge: .head, frames: 1) }
-                item("Trim End −1 Frame", .trimEndBack) { timeline.nudgeTrim(edge: .tail, frames: -1) }
-                item("Trim End +1 Frame", .trimEndForward) { timeline.nudgeTrim(edge: .tail, frames: 1) }
+                Menu("Trim") {
+                    item("Trim Start ke Playhead", .trimStart) { timeline.trimStartToPlayhead() }
+                    item("Trim End ke Playhead", .trimEnd) { timeline.trimEndToPlayhead() }
+                    item("Trim ke Range In/Out", .trimToRange) { timeline.trimToRange() }
+                    Divider()
+                    item("Trim Start −1 Frame", .trimStartBack) { timeline.nudgeTrim(edge: .head, frames: -1) }
+                    item("Trim Start +1 Frame", .trimStartForward) { timeline.nudgeTrim(edge: .head, frames: 1) }
+                    item("Trim End −1 Frame", .trimEndBack) { timeline.nudgeTrim(edge: .tail, frames: -1) }
+                    item("Trim End +1 Frame", .trimEndForward) { timeline.nudgeTrim(edge: .tail, frames: 1) }
+                }
+                Menu("Audition") {
+                    item("Add Browser Selection as Take", .addTake) {
+                        if let id = timeline.selectedClipID, let asset = library.selectedAsset { timeline.addTake(to: id, asset: asset) }
+                        else { timeline.statusMessage = "Pilih klip di timeline dan media di Browser." }
+                    }
+                    item("Next Take", .nextTake) { if let id = timeline.selectedClipID { timeline.cycleTake(id, by: 1) } }
+                    item("Previous Take", .previousTake) { if let id = timeline.selectedClipID { timeline.cycleTake(id, by: -1) } }
+                    item("Finalize Audition", .finalizeAudition) { if let id = timeline.selectedClipID { timeline.finalizeAudition(id) } }
+                }
+                Menu("Multicam") {
+                    item("New Multicam Clip from Browser Selection…", .newMulticam) { Task { await library.createMulticam(into: timeline) } }
+                    ForEach(AngleScope.allCases, id: \.self) { scope in
+                        Divider()
+                        ForEach(1...9, id: \.self) { n in
+                            item(angleTitle(scope, n), .switchAngle(scope, n)) {
+                                timeline.switchAngle(n - 1, video: scope != .audio, audio: scope != .video)
+                            }
+                        }
+                    }
+                }
             }
 
             CommandMenu("Efek") {
-                ForEach(TitlePreset.allCases, id: \.self) { preset in
-                    Button("Tambah Judul: \(preset.title)") { timeline.addTitle(preset) }
+                Menu("Judul") {
+                    ForEach(TitlePreset.allCases, id: \.self) { preset in
+                        Button(preset.title) { timeline.addTitle(preset) }
+                    }
+                }
+                Menu("Transisi") {
+                    ForEach(TransitionKind.allCases, id: \.self) { kind in
+                        Button(kind.title) { timeline.applyTransition(kind) }
+                    }
+                }
+                Menu("Look") {
+                    ForEach(LookPreset.allCases, id: \.self) { look in
+                        Button(look.title) { timeline.applyLook(look) }
+                    }
                 }
                 Divider()
-                ForEach(TransitionKind.allCases, id: \.self) { kind in
-                    Button("Pasang Transisi: \(kind.title)") { timeline.applyTransition(kind) }
+                Menu("Audio") {
+                    Button("Auto-Duck Musik di Bawah Dialog") { Task { await timeline.autoDuck() } }
+                    Button("Auto-Sync Audio ke Video") { Task { await timeline.autoSyncAudioToVideo() } }
+                    Divider()
+                    Button("Tandai Beat dari Klip Terpilih") { let id = timeline.selectedClipID; Task { await timeline.markBeats(of: id) } }
+                    Button("Potong Klip Terpilih Sesuai Beat") { timeline.cutToBeats() }
+                    Divider()
+                    ForEach(AudioRole.allCases, id: \.self) { role in
+                        Button("Peran Klip: \(role.title)") { if let id = timeline.selectedClipID { timeline.setRole(id, role) } }
+                    }
                 }
-                Divider()
-                ForEach(LookPreset.allCases, id: \.self) { look in
-                    Button("Look: \(look.title)") { timeline.applyLook(look) }
+                Menu("Caption") {
+                    Button("Buat Caption Otomatis dari Klip Terpilih…") {
+                        let id = timeline.selectedClipID
+                        Task { await timeline.generateCaptions(for: id) }
+                    }
+                    Button("Impor Subtitle (.srt)…") { timeline.importSRT() }
+                    Button("Ekspor Caption (.srt)…") { timeline.exportSRT() }
                 }
             }
 
@@ -118,49 +162,6 @@ struct KhinccCutProApp: App {
                     if library.watchedFolder == nil { library.chooseWatchFolder(timeline: timeline) } else { library.stopWatching() }
                 }
                 item(timeline.useProxies ? "Pakai Media Asli" : "Pakai Proxy", .toggleProxy) { timeline.setUseProxies(!timeline.useProxies) }
-            }
-
-            CommandMenu("Audio") {
-                Button("Auto-Duck Musik di Bawah Dialog") { Task { await timeline.autoDuck() } }
-                Button("Auto-Sync Audio ke Video") { Task { await timeline.autoSyncAudioToVideo() } }
-                Divider()
-                Button("Tandai Beat dari Klip Terpilih") { let id = timeline.selectedClipID; Task { await timeline.markBeats(of: id) } }
-                Button("Potong Klip Terpilih Sesuai Beat") { timeline.cutToBeats() }
-                Divider()
-                ForEach(AudioRole.allCases, id: \.self) { role in
-                    Button("Peran Klip: \(role.title)") { if let id = timeline.selectedClipID { timeline.setRole(id, role) } }
-                }
-            }
-
-            CommandMenu("Caption") {
-                Button("Buat Caption Otomatis dari Klip Terpilih…") {
-                    let id = timeline.selectedClipID
-                    Task { await timeline.generateCaptions(for: id) }
-                }
-                Button("Impor Subtitle (.srt)…") { timeline.importSRT() }
-                Button("Ekspor Caption (.srt)…") { timeline.exportSRT() }
-            }
-
-            CommandMenu("Audition") {
-                item("Add Browser Selection as Take", .addTake) {
-                    if let id = timeline.selectedClipID, let asset = library.selectedAsset { timeline.addTake(to: id, asset: asset) }
-                    else { timeline.statusMessage = "Pilih klip di timeline dan media di Browser." }
-                }
-                item("Next Take", .nextTake) { if let id = timeline.selectedClipID { timeline.cycleTake(id, by: 1) } }
-                item("Previous Take", .previousTake) { if let id = timeline.selectedClipID { timeline.cycleTake(id, by: -1) } }
-                item("Finalize Audition", .finalizeAudition) { if let id = timeline.selectedClipID { timeline.finalizeAudition(id) } }
-            }
-
-            CommandMenu("Multicam") {
-                item("New Multicam Clip from Browser Selection…", .newMulticam) { Task { await library.createMulticam(into: timeline) } }
-                ForEach(AngleScope.allCases, id: \.self) { scope in
-                    Divider()
-                    ForEach(1...9, id: \.self) { n in
-                        item(angleTitle(scope, n), .switchAngle(scope, n)) {
-                            timeline.switchAngle(n - 1, video: scope != .audio, audio: scope != .video)
-                        }
-                    }
-                }
             }
 
             CommandMenu("Tools") {
@@ -177,20 +178,6 @@ struct KhinccCutProApp: App {
                 item("Zoom Out", .zoomOut) { timeline.zoom = max(0.25, timeline.zoom / 1.5) }
             }
 
-            CommandMenu("Mark") {
-                item("Set Range Start", .markIn) { transport.markIn() }
-                item("Set Range End", .markOut) { transport.markOut() }
-                item("Clear Range", .clearRange) { transport.clearMarks() }
-                Divider()
-                item("Tambah Marker", .addMarker) { timeline.addMarker() }
-                item("Marker Berikutnya", .nextMarker) { timeline.jumpToMarker(forward: true) }
-                item("Marker Sebelumnya", .previousMarker) { timeline.jumpToMarker(forward: false) }
-                Button("Hapus Semua Marker Beat") { timeline.clearBeatMarkers() }
-                Button("Hapus Marker di Playhead") {
-                    if let m = timeline.markers.first(where: { abs($0.time - timeline.playhead) < 0.1 }) { timeline.removeMarker(m.id) }
-                }
-            }
-
             CommandMenu("Playback") {
                 item(transport.isPlaying ? "Pause" : "Play", .playPause) { transport.togglePlay() }
                 item("Play Reverse", .playReverse) { transport.shuttle(forward: false) }
@@ -203,6 +190,18 @@ struct KhinccCutProApp: App {
                 item("Next Edit", .nextEdit) { timeline.jumpToEdit(forward: true) }
                 item("Go to Start", .goToStart) { transport.goToStart() }
                 item("Go to End", .goToEnd) { transport.goToEnd() }
+                Divider()
+                item("Set Range Start", .markIn) { transport.markIn() }
+                item("Set Range End", .markOut) { transport.markOut() }
+                item("Clear Range", .clearRange) { transport.clearMarks() }
+                Divider()
+                item("Tambah Marker", .addMarker) { timeline.addMarker() }
+                item("Marker Berikutnya", .nextMarker) { timeline.jumpToMarker(forward: true) }
+                item("Marker Sebelumnya", .previousMarker) { timeline.jumpToMarker(forward: false) }
+                Button("Hapus Semua Marker Beat") { timeline.clearBeatMarkers() }
+                Button("Hapus Marker di Playhead") {
+                    if let m = timeline.markers.first(where: { abs($0.time - timeline.playhead) < 0.1 }) { timeline.removeMarker(m.id) }
+                }
             }
         }
 
